@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import copy
-from django.db.models.manager import Manager
+from django.db.models import Model, Manager, get_model
 from django.db.models.query import RawQuerySet
-from mosql.query import select
+from mosql.query import select, join
 try:
     basestring
 except NameError:   # If basestring is not a thing, just alias it to str
@@ -19,6 +19,7 @@ class MoQuerySet(object):
         self._db = using
         self._rawqueryset = None
         self._where = {}
+        self._joins = []
 
     def __iter__(self):
         """Iterate through the queryset using the backed RawQuerySet"""
@@ -41,6 +42,8 @@ class MoQuerySet(object):
             kwargs = {}
             if self._where:
                 kwargs['where'] = self._where
+            if self._joins:
+                kwargs['joins'] = [join(*j) for j in self._joins]
             raw_query = select(self.model._meta.db_table, **kwargs)
             self._rawqueryset = RawQuerySet(
                 raw_query=raw_query, model=self.model, using=self._db
@@ -53,6 +56,22 @@ class MoQuerySet(object):
     def where(self, mapping):
         clone = self._clone()
         clone._where.update(mapping)
+        return clone
+
+    def join(self, model, as_, on=None, using=None, join_type=None):
+        if isinstance(model, basestring):   # Try to lazy-load the model
+            parts = model.split('.')
+            if len(parts) == 2 and parts[0] and parts[1]:
+                model = get_model(*parts)
+        if issubclass(model, Model):
+            table = model._meta.db_table
+        else:
+            table = model
+        clone = self._clone()
+        clone._joins.append({
+            'table': table, 'on': on, 'using': using,
+            'type': join_type or ''
+        })
         return clone
 
 

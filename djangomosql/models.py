@@ -25,7 +25,7 @@ def _as(src, dest):
 
 
 class MoQuerySet(object):
-    """Django query set subclass with MoSQL bridging"""
+    """Django query set wrapper to bridge with MoSQL"""
 
     def __init__(self, model, fields, using):
         self.model = model

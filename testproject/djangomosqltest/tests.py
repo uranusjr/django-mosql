@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from django_nose import FastFixtureTestCase as TestCase
-from nose.tools import ok_, eq_, assert_not_equal, assert_is_not_none
+from nose.tools import ok_, eq_, assert_not_equal
 from .models import Employee, Department
 
 
@@ -29,3 +29,9 @@ class DjangoMoSQLTests(TestCase):
 
         people = people.where({'last_name': 'Lin'})
         eq_(people.count(), 0)
+
+    def test_join(self):
+        people = Employee.objects.select(('d.name', 'department_name')).join(
+            Department, 'd', on={'department_id': 'd.id'})
+        for p in people:
+            ok_(hasattr(p, 'department_name'))

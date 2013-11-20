@@ -3,3 +3,4 @@ __pycache__/
 /django_mosql.egg-info/
 /build/
 /dist/
+db.sqlite3

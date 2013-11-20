@@ -1,0 +1,27 @@
+[
+{
+    "pk": 1, 
+    "model": "djangomosqltest.department", 
+    "fields": {
+        "name": "Dev Team"
+    }
+},
+{
+    "pk": 1, 
+    "model": "djangomosqltest.employee", 
+    "fields": {
+        "department": null, 
+        "first_name": "Mosky", 
+        "last_name": "Liu"
+    }
+},
+{
+    "pk": 2, 
+    "model": "djangomosqltest.employee", 
+    "fields": {
+        "department": 1, 
+        "first_name": "Keith", 
+        "last_name": "Yang"
+    }
+}
+]

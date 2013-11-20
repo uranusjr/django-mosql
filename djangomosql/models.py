@@ -56,7 +56,6 @@ class MoQuerySet(object):
             if self._joins:
                 kwargs['joins'] = [join(**j) for j in self._joins]
             raw_query = select(self.model._meta.db_table, **kwargs)
-            print raw_query
             self._rawqueryset = RawQuerySet(
                 raw_query=raw_query, model=self.model, using=self._db
             )

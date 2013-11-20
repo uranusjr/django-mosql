@@ -2,8 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import copy
+import logging
+from django.db import connections
 from django.db.models import Model, Manager, get_model
 from django.db.models.query import RawQuerySet
+from django.db.utils import DEFAULT_DB_ALIAS
 from mosql.query import select, join
 from mosql.util import raw, identifier, star, paren
 try:
@@ -13,6 +16,8 @@ except NameError:   # If basestring is not a thing, just alias it to str
 
 
 __all__ = ['MoQuerySet', 'MoManager']
+
+logger = logging.getLogger(__name__)
 
 
 def _as(src, dest):
@@ -55,6 +60,22 @@ class MoQuerySet(object):
                 kwargs['where'] = self._where
             if self._joins:
                 kwargs['joins'] = [join(**j) for j in self._joins]
+
+            # Import MoSQL's detabase specific fixes
+            db = self._db or DEFAULT_DB_ALIAS
+            vendor = connections[db].vendor
+            if vendor == 'postgresql':
+                pass
+            elif vendor == 'mysql':
+                import mosql.mysql as _
+                del _   # Get around PyFlakes "imported but not used" warning
+            else:
+                msg = (
+                    'Current database ({vendor}) not supported by MoSQL. '
+                    'Will generate standard SQL instead.'
+                ).format(vendor=vendor)
+                logger.warning(msg)
+
             raw_query = select(self.model._meta.db_table, **kwargs)
             self._rawqueryset = RawQuerySet(
                 raw_query=raw_query, model=self.model, using=self._db

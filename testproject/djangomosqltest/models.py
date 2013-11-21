@@ -32,3 +32,19 @@ class Employee(models.Model):
 
     def __unicode__(self):
         return _('Employee %s %s') % (self.first_name, self.last_name)
+
+
+class FruitProduct(models.Model):
+    kind = models.CharField(max_length=10)
+    variety = models.CharField(max_length=10)
+    price = models.FloatField()
+
+    objects = MoManager()
+
+    class Meta:
+        verbose_name = _('Fruit')
+        verbose_name_plural = _('Fruits')
+
+    def __unicode__(self):
+        return _('%s %s ($%.2f)' % (self.variety, self.kind, self.price))
+

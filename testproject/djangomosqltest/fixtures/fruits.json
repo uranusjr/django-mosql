@@ -1,0 +1,83 @@
+[
+{
+    "pk": 1, 
+    "model": "djangomosqltest.fruitproduct", 
+    "fields": {
+        "kind": "apple", 
+        "price": 2.79, 
+        "variety": "gala"
+    }
+},
+{
+    "pk": 2, 
+    "model": "djangomosqltest.fruitproduct", 
+    "fields": {
+        "kind": "apple", 
+        "price": 0.24, 
+        "variety": "fuji"
+    }
+},
+{
+    "pk": 3, 
+    "model": "djangomosqltest.fruitproduct", 
+    "fields": {
+        "kind": "apple", 
+        "price": 2.87, 
+        "variety": "limbertwig"
+    }
+},
+{
+    "pk": 4, 
+    "model": "djangomosqltest.fruitproduct", 
+    "fields": {
+        "kind": "orange", 
+        "price": 3.59, 
+        "variety": "valencia"
+    }
+},
+{
+    "pk": 5, 
+    "model": "djangomosqltest.fruitproduct", 
+    "fields": {
+        "kind": "orange", 
+        "price": 9.36, 
+        "variety": "navel"
+    }
+},
+{
+    "pk": 6, 
+    "model": "djangomosqltest.fruitproduct", 
+    "fields": {
+        "kind": "pear", 
+        "price": 6.05, 
+        "variety": "bradford"
+    }
+},
+{
+    "pk": 7, 
+    "model": "djangomosqltest.fruitproduct", 
+    "fields": {
+        "kind": "pear", 
+        "price": 2.14, 
+        "variety": "bartlett"
+    }
+},
+{
+    "pk": 8, 
+    "model": "djangomosqltest.fruitproduct", 
+    "fields": {
+        "kind": "cherry", 
+        "price": 2.55, 
+        "variety": "bing"
+    }
+},
+{
+    "pk": 9, 
+    "model": "djangomosqltest.fruitproduct", 
+    "fields": {
+        "kind": "cherry", 
+        "price": 6.33, 
+        "variety": "chelan"
+    }
+}
+]

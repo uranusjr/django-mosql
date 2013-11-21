@@ -10,7 +10,7 @@ env:
     - DJANGO=1.6
 
 install:
-    - pip install -q django==$DJANGO --user-mirrors
+    - pip install -q django==$DJANGO --use-mirrors
     - pip install -q django-nose --use-mirrors
     - pip install -q -e . --use-mirrors
 

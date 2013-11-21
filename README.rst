@@ -1,3 +1,6 @@
+.. image:: https://travis-ci.org/uranusjr/django-mosql.png?branch=master
+   :target: https://travis-ci.org/uranusjr/django-mosql
+
 =============
 Django MoSQL
 =============

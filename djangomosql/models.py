@@ -34,9 +34,14 @@ class MoQuerySet(object):
         self._where = {}
         self._joins = []
 
+    def __repr__(self):
+        rqs = self._get_rawqueryset()
+        text = repr(rqs)
+        return '<MoQuerySet: ' + text[14:]  # Replace "<RawQuerySet: "
+
     def __iter__(self):
         """Iterate through the queryset using the backed RawQuerySet"""
-        return self._get_rawqueryset().__iter__()
+        return iter(self._get_rawqueryset())
 
     def __getitem__(self, k):
         return list(self)[k]

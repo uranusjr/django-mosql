@@ -62,8 +62,8 @@ class MoQuerySet(object):
                 kwargs['joins'] = [join(**j) for j in self._joins]
 
             # Import MoSQL's detabase specific fixes
-            db = self._db or DEFAULT_DB_ALIAS
-            vendor = connections[db].vendor
+            conn = connections.get(self._db, connections[DEFAULT_DB_ALIAS])
+            vendor = conn.vendor
             if vendor == 'postgresql':
                 pass
             elif vendor == 'mysql':

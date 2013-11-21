@@ -97,7 +97,7 @@ class FruitMoSQLTests(TestCase):
     def test_subquery(self):
         m = FruitProduct.objects
         inner = m.select((Min('price'), 'minprice')).group_by('kind')
-        p = m.select().as_('f').order_by('kind').join(
+        p = m.select().as_('f').order_by('f.kind').join(
             inner, 'x', on={'f.kind': 'x.kind', 'f.price': 'x.minprice'}
         )
 

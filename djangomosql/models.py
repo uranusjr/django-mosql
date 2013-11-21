@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+__all__ = ['MoQuerySet', 'MoManager']
+
 import copy
 import logging
 from django.db import connections
@@ -13,9 +15,6 @@ try:
     basestring
 except NameError:   # If basestring is not a thing, just alias it to str
     basestring = str
-
-
-__all__ = ['MoQuerySet', 'MoManager']
 
 logger = logging.getLogger(__name__)
 

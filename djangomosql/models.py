@@ -8,7 +8,7 @@ from django.db.models import Model, Manager, get_model
 from django.db.models.query import RawQuerySet
 from django.db.utils import DEFAULT_DB_ALIAS
 from mosql.query import select, join
-from mosql.util import raw, identifier, star, paren
+from mosql.util import raw, identifier, star
 try:
     basestring
 except NameError:   # If basestring is not a thing, just alias it to str
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 def _as(src, dest):
-    return raw('%s AS %s' % (paren(identifier(src)), identifier(dest)))
+    return raw('%s AS %s' % (identifier(src), identifier(dest)))
 
 
 class MoQuerySet(object):

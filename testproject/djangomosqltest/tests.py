@@ -88,3 +88,23 @@ class FruitMoSQLTests(TestCase):
         eq_((products[1].kind, products[1].minprice), ('cherry', 2.55))
         eq_((products[2].kind, products[2].minprice), ('orange', 3.59))
         eq_((products[3].kind, products[3].minprice), ('pear', 2.14))
+
+    def test_as(self):
+        products = FruitProduct.objects.select().as_('f')
+        eq_(products._get_query_string(),
+            'SELECT "f".* FROM "djangomosqltest_fruitproduct" AS "f"')
+
+    def test_subquery(self):
+        m = FruitProduct.objects
+        inner = m.select((Min('price'), 'minprice')).group_by('kind')
+        p = m.select().as_('f').order_by('kind').join(
+            inner, 'x', on={'f.kind': 'x.kind', 'f.price': 'x.minprice'}
+        )
+
+        def to_tuple(obj):
+            return (obj.kind, obj.variety, obj.price)
+
+        eq_(to_tuple(p[0]), ('apple', 'fuji', 0.24))
+        eq_(to_tuple(p[1]), ('cherry', 'bing', 2.55))
+        eq_(to_tuple(p[2]), ('orange', 'valencia', 3.59))
+        eq_(to_tuple(p[3]), ('pear', 'bartlett', 2.14))

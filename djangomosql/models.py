@@ -33,6 +33,8 @@ class MoQuerySet(object):
         self._rawqueryset = None
         self._where = {}
         self._joins = []
+        self._group_by = []
+        self._order_by = []
 
     def __repr__(self):
         rqs = self._get_rawqueryset()
@@ -55,6 +57,8 @@ class MoQuerySet(object):
         )
         clone._where = self._where.copy()
         clone._joins = copy.copy(self._joins)
+        clone._group_by = copy.copy(self._group_by)
+        clone._order_by = copy.copy(self._order_by)
         return clone
 
     def _get_rawqueryset(self):
@@ -64,6 +68,10 @@ class MoQuerySet(object):
                 kwargs['where'] = self._where
             if self._joins:
                 kwargs['joins'] = [join(**j) for j in self._joins]
+            if self._group_by:
+                kwargs['group_by'] = self._group_by
+            if self._order_by:
+                kwargs['order_by'] = self._order_by
 
             # Import MoSQL's detabase specific fixes
             try:
@@ -95,6 +103,32 @@ class MoQuerySet(object):
     def where(self, mapping):
         clone = self._clone()
         clone._where.update(mapping)
+        return clone
+
+    def group_by(self, *fields):
+        clone = self._clone()
+        clone._group_by += list(fields)
+        return clone
+
+    def order_by(self, *fields):
+        # Try to be sensitive and allow both MoSQL's usage (ASC and DESC) and
+        # Django ORM's convention (the "-" prefix), while maintaining support
+        # for field names with leading dash (-field) with "-field ASC" and
+        # "-field DESC"
+        order_by = []
+        for f in fields:
+            parts = f.split(' ')
+            if len(parts) == 1:
+                fieldname = parts[0]
+                if fieldname.startswith('-'):
+                    fieldname = fieldname[1:] + ' DESC'
+                order_by.append(fieldname)
+            elif len(parts) == 2 and parts[1] == 'ASC' or parts[1] == 'DESC':
+                    order_by.append(f)
+            else:
+                raise SyntaxError('Invalid ordering field {}'.format(f))
+        clone = self._clone()
+        clone._order_by += order_by
         return clone
 
     def join(self, model, alias, on=None, using=None, join_type=None):

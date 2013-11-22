@@ -4,6 +4,7 @@
 __all__ = ['MoQuerySet', 'MoManager']
 
 import copy
+import importlib
 import inspect
 import logging
 from django.db import connections
@@ -169,8 +170,7 @@ class MoManager(Manager):
         if vendor == 'postgresql':
             pass
         elif vendor == 'mysql':
-            import mosql.mysql as _
-            del _   # Get around PyFlakes "imported but not used" warning
+            importlib.import_module('mosql.mysql')
         else:
             msg = (
                 'Current database ({vendor}) not supported by MoSQL. '

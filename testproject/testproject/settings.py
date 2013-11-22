@@ -8,8 +8,10 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.6/ref/settings/
 """
 
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+import importlib
+
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 
@@ -57,13 +59,38 @@ WSGI_APPLICATION = 'testproject.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
+
+# Conditionally add more databases for testing if possible
+try:
+    importlib.import_module('MySQLdb')
+except ImportError:
+    pass
+else:
+    DATABASES['mysql'] = {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'djangomosqltestproject',
+        'USER': 'djangomosql',
+        'PASSWORD': 'djangomosql'
+    }
+
+try:
+    importlib.import_module('psycopg2')
+except ImportError:
+    pass
+else:
+    DATABASES['postgresql'] = {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'HOST': 'localhost',
+        'NAME': 'djangomosqltestproject',
+        'USER': 'djangomosql',
+        'PASSWORD': 'djangomosql'
+    }
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.6/topics/i18n/

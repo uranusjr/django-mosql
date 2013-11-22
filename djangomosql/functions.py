@@ -2,6 +2,8 @@
 # -*- coding: utf-8
 
 """Implements MoSQL convinience functions until they go into master.
+
+Taken directly from MoSQL's dev branch (with minimal naming and style changes).
 """
 
 __all__ = ['Avg', 'Count', 'Min', 'Max', 'Stddev', 'Sum', 'Variance']

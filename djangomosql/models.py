@@ -77,24 +77,6 @@ class MoQuerySet(object):
         if self._order_by:
             kwargs['order_by'] = self._order_by
 
-        # Import MoSQL's detabase specific fixes
-        try:
-            conn = connections[self._db or DEFAULT_DB_ALIAS]
-        except KeyError:
-            conn = connections[DEFAULT_DB_ALIAS]
-        vendor = conn.vendor
-        if vendor == 'postgresql':
-            pass
-        elif vendor == 'mysql':
-            import mosql.mysql as _
-            del _   # Get around PyFlakes "imported but not used" warning
-        else:
-            msg = (
-                'Current database ({vendor}) not supported by MoSQL. '
-                'Will generate standard SQL instead.'
-            ).format(vendor=vendor)
-            logger.warning(msg)
-
         if self._alias:
             table = _as(table, self._alias)
         return select(table, **kwargs)
@@ -178,5 +160,23 @@ class MoManager(Manager):
         :param extra_field_as: Each item should be a 2-tuple indicating the
             field name and the attribute name it will be injected as.
         """
+        # Import MoSQL's detabase specific fixes
+        try:
+            conn = connections[self._db or DEFAULT_DB_ALIAS]
+        except KeyError:
+            conn = connections[DEFAULT_DB_ALIAS]
+        vendor = conn.vendor
+        if vendor == 'postgresql':
+            pass
+        elif vendor == 'mysql':
+            import mosql.mysql as _
+            del _   # Get around PyFlakes "imported but not used" warning
+        else:
+            msg = (
+                'Current database ({vendor}) not supported by MoSQL. '
+                'Will generate standard SQL instead.'
+            ).format(vendor=vendor)
+            logger.warning(msg)
+
         fields = [_as(*f) for f in extra_field_as]
         return MoQuerySet(model=self.model, fields=fields, using=self._db)

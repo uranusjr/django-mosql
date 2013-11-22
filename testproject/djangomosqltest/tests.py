@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from django.db import connections
+from django.db.utils import DEFAULT_DB_ALIAS
 from django_nose import FastFixtureTestCase as TestCase
 from nose.tools import ok_, eq_, assert_not_equal, assert_raises
 from djangomosql.functions import Min
@@ -91,8 +93,11 @@ class FruitMoSQLTests(TestCase):
 
     def test_as(self):
         products = FruitProduct.objects.select().as_('f')
-        eq_(products._get_query_string(),
-            'SELECT "f".* FROM "djangomosqltest_fruitproduct" AS "f"')
+        conn = connections[FruitProduct.objects._db or DEFAULT_DB_ALIAS]
+        expect = 'SELECT "f".* FROM "djangomosqltest_fruitproduct" AS "f"'
+        if conn.vendor == 'mysql':
+            expect = 'SELECT `f`.* FROM `djangomosqltest_fruitproduct` AS `f`'
+        eq_(products._get_query_string(), expect)
 
     def test_subquery(self):
         m = FruitProduct.objects

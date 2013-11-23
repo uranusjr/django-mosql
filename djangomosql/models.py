@@ -65,7 +65,8 @@ class MoQuerySet(object):
         clone._order_by = copy.copy(self._order_by)
         return clone
 
-    def _get_query_string(self):
+    @property
+    def query(self):
         # Import MoSQL's detabase specific fixes
         try:
             conn = connections[self._db or DEFAULT_DB_ALIAS]
@@ -103,9 +104,8 @@ class MoQuerySet(object):
 
     def _get_rawqueryset(self):
         if self._rawqueryset is None:
-            raw_query = self._get_query_string()
             self._rawqueryset = RawQuerySet(
-                raw_query=raw_query, model=self.model, using=self._db
+                raw_query=self.query, model=self.model, using=self._db
             )
         return self._rawqueryset
 
@@ -154,7 +154,7 @@ class MoQuerySet(object):
             if len(parts) == 2 and parts[0] and parts[1]:
                 model = get_model(*parts)
         elif isinstance(model, MoQuerySet):     # Handle subquery
-            model = raw(paren(model._get_query_string()))
+            model = raw(paren(model.query))
 
         if inspect.isclass(model) and issubclass(model, Model):
             table = model._meta.db_table

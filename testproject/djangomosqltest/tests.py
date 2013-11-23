@@ -97,7 +97,7 @@ class FruitMoSQLTests(TestCase):
         expect = 'SELECT "f".* FROM "djangomosqltest_fruitproduct" AS "f"'
         if conn.vendor == 'mysql':
             expect = 'SELECT `f`.* FROM `djangomosqltest_fruitproduct` AS `f`'
-        eq_(products._get_query_string(), expect)
+        eq_(products.query, expect)
 
     def test_subquery(self):
         m = FruitProduct.objects

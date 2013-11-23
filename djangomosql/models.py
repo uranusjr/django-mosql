@@ -51,9 +51,6 @@ class MoQuerySet(object):
     def __getitem__(self, k):
         return list(self)[k]
 
-    def __getattr__(self, name):
-        return getattr(self._get_rawqueryset(), name)
-
     def _clone(self):
         clone = MoQuerySet(
             model=self.model, extra_fields=self.extra_fields, using=self._db

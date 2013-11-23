@@ -28,9 +28,9 @@ def _as(src, dest):
 class MoQuerySet(object):
     """Django query set wrapper to bridge with MoSQL"""
 
-    def __init__(self, model, fields, using):
+    def __init__(self, model, extra_fields, using):
         self.model = model
-        self.fields = fields
+        self.extra_fields = extra_fields
         self._db = using
         self._rawqueryset = None
         self._alias = None
@@ -56,7 +56,7 @@ class MoQuerySet(object):
 
     def _clone(self):
         clone = MoQuerySet(
-            model=self.model, fields=self.fields, using=self._db
+            model=self.model, extra_fields=self.extra_fields, using=self._db
         )
         clone._alias = self._alias
         clone._where = self._where.copy()
@@ -85,7 +85,7 @@ class MoQuerySet(object):
 
         table = self.model._meta.db_table
         star = raw('{table}.*'.format(table=identifier(self._alias or table)))
-        kwargs = {'select': [star] + [f() for f in self.fields]}
+        kwargs = {'select': [star] + [f() for f in self.extra_fields]}
         if self._where:
             kwargs['where'] = self._where
         if self._joins:
@@ -185,6 +185,6 @@ class MoManager(Manager):
         """
         return MoQuerySet(
             model=self.model,
-            fields=[lambda: _as(*f) for f in extra_field_as],
+            extra_fields=[lambda: _as(*f) for f in extra_field_as],
             using=self._db
         )

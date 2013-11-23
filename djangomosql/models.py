@@ -66,12 +66,31 @@ class MoQuerySet(object):
         return clone
 
     def _get_query_string(self):
+        # Import MoSQL's detabase specific fixes
+        try:
+            conn = connections[self._db or DEFAULT_DB_ALIAS]
+        except KeyError:
+            conn = connections[DEFAULT_DB_ALIAS]
+        vendor = conn.vendor
+        if vendor == 'postgresql':
+            pass
+        elif vendor == 'mysql':
+            importlib.import_module('mosql.mysql')
+        else:
+            msg = (
+                'Current database ({vendor}) not supported by MoSQL. '
+                'Will generate standard SQL instead.'
+            ).format(vendor=vendor)
+            logger.warning(msg)
+
         table = self.model._meta.db_table
         star = raw('{table}.*'.format(table=identifier(self._alias or table)))
-        kwargs = {'select': [star] + self.fields}
+        kwargs = {'select': [star] + [f() for f in self.fields]}
         if self._where:
             kwargs['where'] = self._where
         if self._joins:
+            for join_info in self._joins:
+                join_info['table'] = join_info['table']()
             kwargs['joins'] = [join(**j) for j in self._joins]
         if self._group_by:
             kwargs['group_by'] = self._group_by
@@ -145,7 +164,10 @@ class MoQuerySet(object):
             raise TypeError('join() arg 1 must be a Django model or a str '
                             'subclass instance')
         clone = self._clone()
-        join_info = {'table': _as(table, alias), 'on': on, 'using': using}
+        join_info = {
+            'table': lambda: _as(table, alias),
+            'on': on, 'using': using
+        }
         if join_type is not None:
             join_info['type'] = join_type
         clone._joins.append(join_info)
@@ -161,22 +183,8 @@ class MoManager(Manager):
         :param extra_field_as: Each item should be a 2-tuple indicating the
             field name and the attribute name it will be injected as.
         """
-        # Import MoSQL's detabase specific fixes
-        try:
-            conn = connections[self._db or DEFAULT_DB_ALIAS]
-        except KeyError:
-            conn = connections[DEFAULT_DB_ALIAS]
-        vendor = conn.vendor
-        if vendor == 'postgresql':
-            pass
-        elif vendor == 'mysql':
-            importlib.import_module('mosql.mysql')
-        else:
-            msg = (
-                'Current database ({vendor}) not supported by MoSQL. '
-                'Will generate standard SQL instead.'
-            ).format(vendor=vendor)
-            logger.warning(msg)
-
-        fields = [_as(*f) for f in extra_field_as]
-        return MoQuerySet(model=self.model, fields=fields, using=self._db)
+        return MoQuerySet(
+            model=self.model,
+            fields=[lambda: _as(*f) for f in extra_field_as],
+            using=self._db
+        )

@@ -40,13 +40,11 @@ class MoQuerySet(object):
         self._order_by = []
 
     def __repr__(self):
-        rqs = self._get_rawqueryset()
-        text = repr(rqs)
-        return '<MoQuerySet: ' + text[14:]  # Replace "<RawQuerySet: "
+        return '<MoQuerySet: {query}>'.format(query=self.query)
 
     def __iter__(self):
         """Iterate through the queryset using the backed RawQuerySet"""
-        return iter(self._get_rawqueryset())
+        return iter(self.resolve())
 
     def __getitem__(self, k):
         return list(self)[k]
@@ -99,7 +97,7 @@ class MoQuerySet(object):
             table = _as(table, self._alias)
         return select(table, **kwargs)
 
-    def _get_rawqueryset(self):
+    def resolve(self):
         if self._rawqueryset is None:
             self._rawqueryset = RawQuerySet(
                 raw_query=self.query, model=self.model, using=self._db

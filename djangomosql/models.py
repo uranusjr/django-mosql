@@ -3,6 +3,7 @@
 
 __all__ = ['MoQuerySet', 'MoManager']
 
+import sys
 import copy
 import importlib
 import inspect
@@ -11,6 +12,7 @@ from django.db import connections
 from django.db.models import Model, Manager, get_model
 from django.db.models.query import RawQuerySet
 from django.db.utils import DEFAULT_DB_ALIAS
+from django.utils import six
 from mosql.query import select, join
 from mosql.util import raw, identifier, paren
 try:
@@ -33,6 +35,8 @@ class MoQuerySet(object):
         self.extra_fields = extra_fields
         self._db = using
         self._rawqueryset = None
+        self._offset = 0
+        self._limit = None
         self._alias = None
         self._where = {}
         self._joins = []
@@ -47,12 +51,33 @@ class MoQuerySet(object):
         return iter(self.resolve())
 
     def __getitem__(self, k):
-        return list(self)[k]
+        if not isinstance(k, (slice,) + six.integer_types):
+            raise TypeError
+        assert (
+            (isinstance(k, slice)
+                and (k.start is None or k.start >= 0)
+                and (k.stop is None or k.stop >= 0))
+            or (not isinstance(k, slice) and k >= 0)
+        ), 'Negative indexing is not supported.'
+
+        if isinstance(k, slice):
+            clone = self._clone()
+            if k.start is not None:
+                clone._offset += k.start
+            if k.stop is not None:
+                limit = k.stop - (k.start or 0)
+                if clone._limit is None or limit < clone._limit:
+                    clone._limit = limit
+            return clone
+        else:
+            return list(self)[k]
 
     def _clone(self):
         clone = MoQuerySet(
             model=self.model, extra_fields=self.extra_fields, using=self._db
         )
+        clone._offset = self._offset
+        clone._limit = self._limit
         clone._alias = self._alias
         clone._where = self._where.copy()
         clone._joins = copy.copy(self._joins)
@@ -92,6 +117,11 @@ class MoQuerySet(object):
             kwargs['group_by'] = self._group_by
         if self._order_by:
             kwargs['order_by'] = self._order_by
+        if self._offset:
+            kwargs['offset'] = self._offset
+            kwargs['limit'] = sys.maxsize
+        if self._limit is not None:
+            kwargs['limit'] = self._limit
 
         if self._alias:
             table = _as(table, self._alias)

@@ -46,6 +46,13 @@ class FruitMoSQLTests(TestCase):
 
     fixtures = ['fruits.json']
 
+    def test_slice(self):
+        all_products = FruitProduct.objects.select()
+        eq_(all_products[1:].count(), 8)
+        eq_(all_products[1:7].count(), 6)
+        eq_(all_products[1:7][2:4].count(), 2)
+        eq_(all_products.count(), 9)
+
     def test_order_by(self):
         all_products = FruitProduct.objects.select()
 

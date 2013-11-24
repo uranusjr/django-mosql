@@ -146,8 +146,8 @@ class MoQuerySet(object):
     def join(self, model, alias, on=None, using=None, join_type=None):
         if isinstance(model, basestring):   # Try to lazy-load the model
             parts = model.split('.')
-            if len(parts) == 2 and parts[0] and parts[1]:
-                model = get_model(*parts)
+            if len(parts) == 2 and all(parts):
+                model = get_model(*parts) or model
         elif isinstance(model, MoQuerySet):     # Handle subquery
             model = raw(paren(model.query))
 

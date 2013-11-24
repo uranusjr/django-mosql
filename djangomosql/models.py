@@ -29,8 +29,19 @@ class MoQuerySet(object):
     """Django query set wrapper to bridge with MoSQL"""
 
     def __init__(self, model, extra_fields, using):
+        """Initialize a :class:`MoQuerySet` object.
+
+        :param model: Model class to be queried on.
+        :type model: :class:`django.db.models.Model`
+        :param extra_fields: Extra fields to be injected into the resulting
+            instances. Each item should be a 2-tuple indicating the field name
+            and the attribute name it will be injected as.
+        :param using: Database to use when quering. If given `None`, the
+            default database will be used.
+        :type using: `str` or `None`
+        """
         self.model = model
-        self.extra_fields = extra_fields
+        self.extra_fields = [lambda: _as(*f) for f in extra_fields]
         self._db = using
         self._rawqueryset = None
         self._alias = None
@@ -62,6 +73,7 @@ class MoQuerySet(object):
 
     @property
     def query(self):
+        """The raw SQL that will be used to resolve the queryset."""
         # Import MoSQL's detabase specific fixes
         try:
             conn = connections[self._db or DEFAULT_DB_ALIAS]
@@ -98,6 +110,7 @@ class MoQuerySet(object):
         return select(table, **kwargs)
 
     def resolve(self):
+        """Resolve the queryset."""
         if self._rawqueryset is None:
             self._rawqueryset = RawQuerySet(
                 raw_query=self.query, model=self.model, using=self._db
@@ -107,22 +120,45 @@ class MoQuerySet(object):
     def count(self):
         return len(list(self))
 
-    def as_(self, alias=None):
+    def as_(self, alias):
+        """Create an ``AS`` clause for the current model in the query.
+
+        :param alias: The alias for the ``AS`` clause.
+        :type alias: `str`
+        """
         clone = self._clone()
         clone._alias = alias
         return clone
 
     def where(self, mapping):
+        """Create a ``WHERE`` clause in the query.
+
+        Example::
+
+            Fruit.objects.where({'kind': 'apple', 'price >=': 2.0})
+
+        which will be translated into something like
+        ::
+
+            SELECT * FROM fruit WHERE find = 'apple' AND price >= 2.0
+
+        """
         clone = self._clone()
         clone._where.update(mapping)
         return clone
 
     def group_by(self, *fields):
+        """Create a ``GROUP BY`` clause in the query."""
         clone = self._clone()
         clone._group_by += list(fields)
         return clone
 
     def order_by(self, *fields):
+        """Create a ``ORDER BY`` clause in the query.
+
+        Each field can contain either "ASC", "DESC", or Django-style ``-``
+        prefix to indicate ordering direction.
+        """
         # Try to be sensitive and allow both MoSQL's usage (ASC and DESC) and
         # Django ORM's convention (the "-" prefix), while maintaining support
         # for field names with leading dash (-field) with "-field ASC" and
@@ -144,6 +180,25 @@ class MoQuerySet(object):
         return clone
 
     def join(self, model, alias, on=None, using=None, join_type=None):
+        """Create a ``JOIN`` clause in the query.
+
+        :param model: A model to be joined on. This can be a model class, or
+            a ``<appname>.<ModelName>`` string to lazy-load the model. For
+            joining a non-Django model, you can also provide a plain table
+            name.
+        :type model: `str` or `django.db.models.Model`
+        :param alias: The alias for the to-be-joined model. An ``AS`` clause
+            will be created automatically based on this value.
+        :param on: A mapping for fields to be joined on. Results in a
+            ``JOIN ... ON`` query.
+        :type on: `dict`
+        :param using: A sequence of fields to be joined on. Results in a
+            ``JOIN ... USING`` query.
+        :param join_type: The type of ``JOIN`` to be used. Possible values
+            include ``INNER``, ``LEFT``, ``CROSS`` and other standard SQL
+            ``JOIN`` types. If ommited, a suitable type will be inferred
+            automatically.
+        """
         if isinstance(model, basestring):   # Try to lazy-load the model
             parts = model.split('.')
             if len(parts) == 2 and all(parts):
@@ -180,6 +235,6 @@ class MoManager(Manager):
         """
         return MoQuerySet(
             model=self.model,
-            extra_fields=[lambda: _as(*f) for f in extra_field_as],
+            extra_fields=extra_field_as,
             using=self._db
         )

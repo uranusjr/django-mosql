@@ -21,7 +21,7 @@ Because I want to use raw SQL, but am too lazy to worry about security issues.
 Long version
 +++++++++++++
 
-Django's ORM is cool. And powerful. But ORMs are destined to be leaky, and can't do everything you wish to. That's why Django provides ``raw`` and ``extra`` so that you can roll your own SQL commands if you need to. But with great power comes great responsibility. You lose all the SQL security measures Django provides when you use those methods, and it can be a serious problem unless you are untra careful.
+Django's ORM is cool. And powerful. But ORMs are destined to be leaky, and can't do everything you wish to. That's why Django provides ``raw`` and ``extra`` so that you can roll your own SQL commands if you need to. But with great power comes great responsibility. You lose all the SQL security measures Django provides when you use those methods, and it can be a serious problem unless you are ultra careful.
 
 Enters MoSQL_. MoSQL, in a nutshell, is a tool that generates SQL commands automatically from Python function calls. And it takes care of the injection prevention for you. A perfect match with Django's ``raw``!
 

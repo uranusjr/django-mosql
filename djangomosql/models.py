@@ -3,7 +3,6 @@
 
 __all__ = ['MoQuerySet', 'MoManager']
 
-import sys
 import copy
 import importlib
 import inspect
@@ -119,7 +118,7 @@ class MoQuerySet(object):
             kwargs['order_by'] = self._order_by
         if self._offset:
             kwargs['offset'] = self._offset
-            kwargs['limit'] = sys.maxsize
+            kwargs['limit'] = conn.ops.no_limit_value()
         if self._limit is not None:
             kwargs['limit'] = self._limit
 

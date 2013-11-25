@@ -1,0 +1,7 @@
+v0.2
+* Implement LIMIT and OFFSET with slicing syntax.
+* Support raw table names when using JOIN
+
+v0.1
+Initial release.
+

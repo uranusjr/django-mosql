@@ -41,7 +41,7 @@ class MoQuerySet(object):
         :type using: `str` or `None`
         """
         self.model = model
-        self.extra_fields = [lambda: _as(*f) for f in extra_fields]
+        self.extra_fields = extra_fields
         self._db = using
         self._rawqueryset = None
         self._alias = None
@@ -93,7 +93,7 @@ class MoQuerySet(object):
 
         table = self.model._meta.db_table
         star = raw('{table}.*'.format(table=identifier(self._alias or table)))
-        kwargs = {'select': [star] + [f() for f in self.extra_fields]}
+        kwargs = {'select': [star] + [_as(*f) for f in self.extra_fields]}
         if self._where:
             kwargs['where'] = self._where
         if self._joins:

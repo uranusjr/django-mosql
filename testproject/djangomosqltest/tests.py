@@ -27,7 +27,8 @@ class EmployeeMoSQLTests(TestCase):
         eq_(clone._params.keys(), people._params.keys())
         for k in people._params:
             eq_(people._params[k], clone._params[k])
-            if people._params[k] is not None:
+            if (not isinstance(people._params[k], (int, basestring))
+                    and people._params[k] is not None):
                 assert_false(people._params[k] is clone._params[k])
 
     def test_select(self):
@@ -59,6 +60,13 @@ class EmployeeMoSQLTests(TestCase):
 class FruitMoSQLTests(TestCase):
 
     fixtures = ['fruits.json']
+
+    def test_slice(self):
+        all_products = FruitProduct.objects.select()
+        eq_(all_products[1:].count(), 8)
+        eq_(all_products[1:7].count(), 6)
+        eq_(all_products[1:7][2:4].count(), 2)
+        eq_(all_products.count(), 9)
 
     def test_order_by(self):
         all_products = FruitProduct.objects.select()

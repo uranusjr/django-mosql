@@ -11,6 +11,7 @@ from django.db import connections
 from django.db.models import Model, Manager, get_model
 from django.db.models.query import RawQuerySet
 from django.db.utils import DEFAULT_DB_ALIAS
+from django.utils import six
 from mosql.query import select, join
 from mosql.util import raw, identifier, paren
 try:
@@ -45,6 +46,8 @@ class MoQuerySet(object):
         self._db = using
         self._rawqueryset = None
         self._params = {
+            'offset': 0,
+            'limit': None,
             'alias': None,
             'where': {},
             'joins': [],
@@ -60,7 +63,30 @@ class MoQuerySet(object):
         return iter(self.resolve())
 
     def __getitem__(self, k):
-        return list(self)[k]
+        if not isinstance(k, (slice,) + six.integer_types):
+            raise TypeError('Expecting {expect}, got {got}'.format(
+                expect='slice object or integer',
+                got=k.__class__.__name__
+            ))
+        assert (
+            (isinstance(k, slice)
+                and (k.start is None or k.start >= 0)
+                and (k.stop is None or k.stop >= 0))
+            or (not isinstance(k, slice) and k >= 0)
+        ), 'Negative indexing is not supported.'
+
+        if isinstance(k, slice):
+            clone = self._clone()
+            if k.start is not None:
+                clone._params['offset'] += k.start
+            if k.stop is not None:
+                limit = k.stop - (k.start or 0)
+                if (clone._params['limit'] is None
+                        or limit < clone._params['limit']):
+                    clone._params['limit'] = limit
+            return clone
+        else:
+            return list(self)[k]
 
     def _clone(self):
         clone = MoQuerySet(
@@ -105,6 +131,8 @@ class MoQuerySet(object):
         for k in self._params:
             if self._params[k]:
                 kwargs[k] = self._params[k]
+        if 'offset' in kwargs and 'limit' not in kwargs:
+            kwargs['limit'] = conn.ops.no_limit_value()
 
         if alias:
             table = _as(table, alias)

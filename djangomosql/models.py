@@ -119,9 +119,10 @@ class MoQuerySet(object):
             logger.warning(msg)
 
         if self._params['joins']:
-            for join_info in self._params['joins']:
-                join_info['table'] = join_info['table']()
-            self._params['joins'] = [join(**j) for j in self._params['joins']]
+            self._params['joins'] = [
+                join(table=_as(*j.pop('table')), **j)
+                for j in self._params['joins']
+            ]
 
         table = self.model._meta.db_table
         alias = self._params.pop('alias', None)
@@ -243,10 +244,7 @@ class MoQuerySet(object):
             raise TypeError('join() arg 1 must be a Django model or a str '
                             'subclass instance')
         clone = self._clone()
-        join_info = {
-            'table': lambda: _as(table, alias),
-            'on': on, 'using': using
-        }
+        join_info = {'table': (table, alias), 'on': on, 'using': using}
         if join_type is not None:
             join_info['type'] = join_type
         clone._params['joins'].append(join_info)

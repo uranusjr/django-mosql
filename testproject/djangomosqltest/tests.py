@@ -24,6 +24,7 @@ class EmployeeMoSQLTests(TestCase):
         people = Employee.objects.select().where({'first_name': 'Mosky'})
         clone = people._clone()
         eq_(dir(clone), dir(people))
+        eq_(clone._params.keys(), people._params.keys())
         for k in people._params:
             eq_(people._params[k], clone._params[k])
             if people._params[k] is not None:

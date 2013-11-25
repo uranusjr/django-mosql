@@ -44,11 +44,13 @@ class MoQuerySet(object):
         self.extra_fields = extra_fields
         self._db = using
         self._rawqueryset = None
-        self._alias = None
-        self._where = {}
-        self._joins = []
-        self._group_by = []
-        self._order_by = []
+        self._params = {
+            'alias': None,
+            'where': {},
+            'joins': [],
+            'group_by': [],
+            'order_by': []
+        }
 
     def __repr__(self):
         return '<MoQuerySet: {query}>'.format(query=self.query)
@@ -62,13 +64,12 @@ class MoQuerySet(object):
 
     def _clone(self):
         clone = MoQuerySet(
-            model=self.model, extra_fields=self.extra_fields, using=self._db
+            model=self.model,
+            extra_fields=copy.copy(self.extra_fields),
+            using=self._db
         )
-        clone._alias = self._alias
-        clone._where = self._where.copy()
-        clone._joins = copy.copy(self._joins)
-        clone._group_by = copy.copy(self._group_by)
-        clone._order_by = copy.copy(self._order_by)
+        for k in self._params:
+            clone._params[k] = copy.copy(self._params[k])
         return clone
 
     @property
@@ -91,22 +92,22 @@ class MoQuerySet(object):
             ).format(vendor=vendor)
             logger.warning(msg)
 
-        table = self.model._meta.db_table
-        star = raw('{table}.*'.format(table=identifier(self._alias or table)))
-        kwargs = {'select': [star] + [_as(*f) for f in self.extra_fields]}
-        if self._where:
-            kwargs['where'] = self._where
-        if self._joins:
-            for join_info in self._joins:
+        if self._params['joins']:
+            for join_info in self._params['joins']:
                 join_info['table'] = join_info['table']()
-            kwargs['joins'] = [join(**j) for j in self._joins]
-        if self._group_by:
-            kwargs['group_by'] = self._group_by
-        if self._order_by:
-            kwargs['order_by'] = self._order_by
+            self._params['joins'] = [join(**j) for j in self._params['joins']]
 
-        if self._alias:
-            table = _as(table, self._alias)
+        table = self.model._meta.db_table
+        alias = self._params.pop('alias', None)
+        star = raw('{table}.*'.format(table=identifier(alias or table)))
+
+        kwargs = {'select': [star] + [_as(*f) for f in self.extra_fields]}
+        for k in self._params:
+            if self._params[k]:
+                kwargs[k] = self._params[k]
+
+        if alias:
+            table = _as(table, alias)
         return select(table, **kwargs)
 
     def resolve(self):
@@ -127,7 +128,7 @@ class MoQuerySet(object):
         :type alias: `str`
         """
         clone = self._clone()
-        clone._alias = alias
+        clone._params['alias'] = alias
         return clone
 
     def where(self, mapping):
@@ -144,13 +145,13 @@ class MoQuerySet(object):
 
         """
         clone = self._clone()
-        clone._where.update(mapping)
+        clone._params['where'].update(mapping)
         return clone
 
     def group_by(self, *fields):
         """Create a ``GROUP BY`` clause in the query."""
         clone = self._clone()
-        clone._group_by += list(fields)
+        clone._params['group_by'] += list(fields)
         return clone
 
     def order_by(self, *fields):
@@ -176,7 +177,7 @@ class MoQuerySet(object):
             else:
                 raise SyntaxError('Invalid ordering field {}'.format(f))
         clone = self._clone()
-        clone._order_by += order_by
+        clone._params['order_by'] += order_by
         return clone
 
     def join(self, model, alias, on=None, using=None, join_type=None):
@@ -220,7 +221,7 @@ class MoQuerySet(object):
         }
         if join_type is not None:
             join_info['type'] = join_type
-        clone._joins.append(join_info)
+        clone._params['joins'].append(join_info)
         return clone
 
 

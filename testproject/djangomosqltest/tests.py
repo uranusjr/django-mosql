@@ -4,9 +4,13 @@
 from django.db import connections
 from django.db.utils import DEFAULT_DB_ALIAS
 from django_nose import FastFixtureTestCase as TestCase
-from nose.tools import ok_, eq_, assert_not_equal, assert_raises
+from nose.tools import ok_, eq_, assert_not_equal, assert_false, assert_raises
 from djangomosql.functions import Min
 from .models import Employee, Department, FruitProduct
+try:
+    basestring
+except NameError:   # If basestring is not a thing, just alias it to str
+    basestring = str
 
 
 class EmployeeMoSQLTests(TestCase):
@@ -15,6 +19,15 @@ class EmployeeMoSQLTests(TestCase):
 
     def test_count(self):
         eq_(Employee.objects.count(), 2)
+
+    def test_clone(self):
+        people = Employee.objects.select().where({'first_name': 'Mosky'})
+        clone = people._clone()
+        eq_(dir(clone), dir(people))
+        for k in people._params:
+            eq_(people._params[k], clone._params[k])
+            if people._params[k] is not None:
+                assert_false(people._params[k] is clone._params[k])
 
     def test_select(self):
         people = Employee.objects.select()

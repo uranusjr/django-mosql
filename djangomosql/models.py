@@ -128,10 +128,8 @@ class MoQuerySet(object):
         alias = self._params.pop('alias', None)
         star = raw('{table}.*'.format(table=identifier(alias or table)))
 
-        kwargs = {'select': [star] + [_as(*f) for f in self.extra_fields]}
-        for k in self._params:
-            if self._params[k]:
-                kwargs[k] = self._params[k]
+        kwargs = {k: v for k, v in self._params.items() if v}
+        kwargs['select'] = [star] + [_as(*f) for f in self.extra_fields]
         if 'offset' in kwargs and 'limit' not in kwargs:
             kwargs['limit'] = conn.ops.no_limit_value()
 

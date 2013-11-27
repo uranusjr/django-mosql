@@ -118,17 +118,18 @@ class MoQuerySet(object):
             ).format(vendor=vendor)
             logger.warning(msg)
 
-        if self._params['joins']:
-            self._params['joins'] = [
-                join(table=_as(*j.pop('table')), **j)
-                for j in self._params['joins']
+        params = copy.deepcopy(self._params)
+
+        if params['joins']:
+            params['joins'] = [
+                join(table=_as(*j.pop('table')), **j) for j in params['joins']
             ]
 
         table = self.model._meta.db_table
-        alias = self._params.pop('alias', None)
+        alias = params.pop('alias', None)
         star = raw('{table}.*'.format(table=identifier(alias or table)))
 
-        kwargs = {k: v for k, v in self._params.items() if v}
+        kwargs = {k: v for k, v in params.items() if v}
         kwargs['select'] = [star] + [_as(*f) for f in self.extra_fields]
         if 'offset' in kwargs and 'limit' not in kwargs:
             kwargs['limit'] = conn.ops.no_limit_value()

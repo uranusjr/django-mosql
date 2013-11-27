@@ -14,6 +14,7 @@ from django.db.utils import DEFAULT_DB_ALIAS
 from django.utils import six
 from mosql.query import select, join
 from mosql.util import raw, identifier, paren
+from .functions import LazyFunction
 try:
     basestring
 except NameError:   # If basestring is not a thing, just alias it to str
@@ -23,6 +24,8 @@ logger = logging.getLogger(__name__)
 
 
 def _as(src, dest):
+    if isinstance(src, LazyFunction):
+        src = src.resolve()
     return raw('%s AS %s' % (identifier(src), identifier(dest)))
 
 

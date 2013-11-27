@@ -1,31 +1,52 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
 
-"""Implements MoSQL convinience functions until they go into master.
+__all__ = [
+    'LazyFunction', 'Avg', 'Count', 'Min', 'Max', 'Stddev', 'Sum', 'Variance'
+]
 
-Taken directly from MoSQL's dev branch (with minimal naming and style changes).
-"""
-
-__all__ = ['Avg', 'Count', 'Min', 'Max', 'Stddev', 'Sum', 'Variance']
-
-from mosql.util import raw, concat_by_comma, identifier
+from . import _func as _
 
 
-def _make_simple_function(name):
+class LazyFunction(object):
+    def __init__(self, func, *args):
+        self._f = (func,)
+        self._args = args
 
-    def simple_function(*args):
-        return raw('%s(%s)' % (
-            name.upper(),
-            concat_by_comma(identifier(x) for x in args)
-        ))
-
-    return simple_function
+    def resolve(self):
+        return self._f[0](*self._args)
 
 
-Avg = _make_simple_function('AVG')
-Count = _make_simple_function('COUNT')
-Min = _make_simple_function('MIN')
-Max = _make_simple_function('MAX')
-Stddev = _make_simple_function('STDDEV')
-Sum = _make_simple_function('SUM')
-Variance = _make_simple_function('VARIANCE')
+class Avg(LazyFunction):
+    def __init__(self, *args):
+        super(Avg, self).__init__(_.avg, *args)
+
+
+class Count(LazyFunction):
+    def __init__(self, *args):
+        super(Count, self).__init__(_.count, *args)
+
+
+class Min(LazyFunction):
+    def __init__(self, *args):
+        super(Min, self).__init__(_.min, *args)
+
+
+class Max(LazyFunction):
+    def __init__(self, *args):
+        super(Max, self).__init__(_.max, *args)
+
+
+class Stddev(LazyFunction):
+    def __init__(self, *args):
+        super(Stddev, self).__init__(_.stddev, *args)
+
+
+class Sum(LazyFunction):
+    def __init__(self, *args):
+        super(Sum, self).__init__(_.sum, *args)
+
+
+class Variance(LazyFunction):
+    def __init__(self, *args):
+        super(Variance, self).__init__(_.variance, *args)

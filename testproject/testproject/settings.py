@@ -65,6 +65,15 @@ DATABASES = {
     }
 }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'djangomosqltestproject',
+#         'USER': 'djangomosql',
+#         'PASSWORD': 'djangomosql'
+#     }
+# }
+
 # Internationalization
 # https://docs.djangoproject.com/en/1.6/topics/i18n/
 

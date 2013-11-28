@@ -256,14 +256,14 @@ class MoQuerySet(object):
 class MoManager(Manager):
     """Django model manager subclass with MoSQL bridging"""
 
-    def select(self, *extra_field_as):
+    def select(self, *extra_fields_as):
         """Generate a MoQuerySet to kick-off MoSQL query syntax
 
-        :param extra_field_as: Each item should be a 2-tuple indicating the
+        :param extra_fields_as: Each item should be a 2-tuple indicating the
             field name and the attribute name it will be injected as.
         """
         return MoQuerySet(
             model=self.model,
-            extra_fields=extra_field_as,
+            extra_fields=extra_fields_as,
             using=self._db
         )

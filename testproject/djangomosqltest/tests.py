@@ -54,6 +54,11 @@ class EmployeeMoSQLTests(TestCase):
         for p in people:
             ok_(hasattr(p, 'department_name'))
 
+    def test_extra_select(self):
+        people = Employee.objects.select().select(('first_name', 'fn'))
+        for p in people:
+            ok_(p.fn)
+
 
 # Tests in this class originates from
 # http://www.xaprb.com/blog/2006/12/07/how-to-select-the-firstleastmax-row-per-group-in-sql/

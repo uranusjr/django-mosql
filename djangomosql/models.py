@@ -152,6 +152,16 @@ class MoQuerySet(object):
     def count(self):
         return len(list(self))
 
+    def select(self, *extra_fields_as):
+        """Provide extra fields to select on.
+
+        :param extra_fields_as: Each item should be a 2-tuple indicating the
+            field name and the attribute name it will be injected as.
+        """
+        clone = self._clone()
+        clone.extra_fields += extra_fields_as
+        return clone
+
     def as_(self, alias):
         """Create an ``AS`` clause for the current model in the query.
 

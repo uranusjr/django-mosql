@@ -40,7 +40,7 @@ Let's say you have the following model::
         variety = models.CharField(max_length=10)
         price = models.FloatField()
 
-Then all you need is to provide a ``MoManager`` as one of its model managers. Add ``djangomosql`` to your ``INSTALLED_APPS``, and modify the code like this::
+Then you only need to provide a ``MoManager`` as one of its model managers. Add ``djangomosql`` to your ``INSTALLED_APPS``, and modify the code like this::
 
     from djangomosql.models import MoManager
 
@@ -61,7 +61,7 @@ Which is roughly equivalent to
 
 ::
 
-    SELECT fruit.*, MIN(price) as minprice GROUP BY kind ORDER BY kind DESC
+    SELECT fruit.*, MIN(price) as minprice FROM fruit GROUP BY kind ORDER BY kind DESC
 
 Of course, this won't be of much use if we can only do things Django's ORM can. With Django MoSQL, you can achieve many funky things, like::
 

@@ -9,44 +9,36 @@ from . import _func as _
 
 
 class LazyFunction(object):
-    def __init__(self, func, *args):
-        self._f = (func,)
+    def __init__(self, *args):
         self._args = args
 
     def resolve(self):
-        return self._f[0](*self._args)
+        return self.function(*self._args)
 
 
 class Avg(LazyFunction):
-    def __init__(self, *args):
-        super(Avg, self).__init__(_.avg, *args)
+    function = staticmethod(_.avg)
 
 
 class Count(LazyFunction):
-    def __init__(self, *args):
-        super(Count, self).__init__(_.count, *args)
+    function = staticmethod(_.count)
 
 
 class Min(LazyFunction):
-    def __init__(self, *args):
-        super(Min, self).__init__(_.min, *args)
+    function = staticmethod(_.min)
 
 
 class Max(LazyFunction):
-    def __init__(self, *args):
-        super(Max, self).__init__(_.max, *args)
+    function = staticmethod(_.max)
 
 
 class Stddev(LazyFunction):
-    def __init__(self, *args):
-        super(Stddev, self).__init__(_.stddev, *args)
+    function = staticmethod(_.stddev)
 
 
 class Sum(LazyFunction):
-    def __init__(self, *args):
-        super(Sum, self).__init__(_.sum, *args)
+    function = staticmethod(_.sum)
 
 
 class Variance(LazyFunction):
-    def __init__(self, *args):
-        super(Variance, self).__init__(_.variance, *args)
+    function = staticmethod(_.variance)

@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from pkg_resources import get_distribution
 from django.db import connections
 from django.db.utils import DEFAULT_DB_ALIAS
-from django_nose import FastFixtureTestCase as TestCase
+from django.test import TestCase
+from django_nose import FastFixtureTestCase
 from nose.tools import ok_, eq_, assert_not_equal, assert_false, assert_raises
+import djangomosql
 from djangomosql.functions import Min
 from .models import Employee, Department, FruitProduct
 try:
@@ -13,7 +16,22 @@ except NameError:   # If basestring is not a thing, just alias it to str
     basestring = str
 
 
-class EmployeeMoSQLTests(TestCase):
+class BasicTests(TestCase):
+    def test_version(self):
+        eq_(get_distribution('django-mosql').version, djangomosql.__version__)
+
+    def test_repr(self):
+        queryset = Employee.objects.select().where({'first_name': 'Mosky'})
+        result = (
+            '<MoQuerySet: SELECT "{table}".* FROM "{table}"'
+            ' WHERE "first_name" = \'Mosky\'>'.format(
+                table=Employee._meta.db_table
+            )
+        )
+        eq_(repr(queryset), result)
+
+
+class EmployeeMoSQLTests(FastFixtureTestCase):
 
     fixtures = ['employees.json']
 
@@ -54,6 +72,18 @@ class EmployeeMoSQLTests(TestCase):
         for p in people:
             ok_(hasattr(p, 'department_name'))
 
+    def test_join_lazy(self):
+        people = Employee.objects.select(('d.name', 'department_name')).join(
+            'djangomosqltest.Department', 'd', on={'department_id': 'd.id'})
+        for p in people:
+            ok_(hasattr(p, 'department_name'))
+
+    def test_join_raw(self):
+        people = Employee.objects.select(('d.name', 'department_name')).join(
+            'djangomosqltest_department', 'd', on={'department_id': 'd.id'})
+        for p in people:
+            ok_(hasattr(p, 'department_name'))
+
     def test_extra_select(self):
         people = Employee.objects.select().select(('first_name', 'fn'))
         for p in people:
@@ -62,7 +92,7 @@ class EmployeeMoSQLTests(TestCase):
 
 # Tests in this class originates from
 # http://www.xaprb.com/blog/2006/12/07/how-to-select-the-firstleastmax-row-per-group-in-sql/
-class FruitMoSQLTests(TestCase):
+class FruitMoSQLTests(FastFixtureTestCase):
 
     fixtures = ['fruits.json']
 
@@ -72,6 +102,12 @@ class FruitMoSQLTests(TestCase):
         eq_(all_products[1:7].count(), 6)
         eq_(all_products[1:7][2:4].count(), 2)
         eq_(all_products.count(), 9)
+
+        with assert_raises(TypeError):
+            all_products['EPIC FAIL']
+
+        with assert_raises(AssertionError):
+            all_products[-1]
 
     def test_order_by(self):
         all_products = FruitProduct.objects.select()

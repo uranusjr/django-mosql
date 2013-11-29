@@ -105,11 +105,8 @@ class MoQuerySet(object):
     def query(self):
         """The raw SQL that will be used to resolve the queryset."""
         # Import MoSQL's detabase specific fixes
-        try:
-            conn = connections[self._db or DEFAULT_DB_ALIAS]
-        except KeyError:
-            conn = connections[DEFAULT_DB_ALIAS]
-        vendor = conn.vendor
+        current_connection = connections[self._db or DEFAULT_DB_ALIAS]
+        vendor = current_connection.vendor
         if vendor == 'postgresql':
             pass
         elif vendor == 'mysql':
@@ -135,7 +132,7 @@ class MoQuerySet(object):
         kwargs = {k: v for k, v in params.items() if v}
         kwargs['select'] = [star] + [_as(*f) for f in self.extra_fields]
         if 'offset' in kwargs and 'limit' not in kwargs:
-            kwargs['limit'] = conn.ops.no_limit_value()
+            kwargs['limit'] = current_connection.ops.no_limit_value()
 
         if alias:
             table = _as(table, alias)

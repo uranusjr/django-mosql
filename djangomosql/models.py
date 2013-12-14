@@ -135,7 +135,7 @@ class MoQuerySet(object):
             kwargs['limit'] = current_connection.ops.no_limit_value()
 
         if alias:
-            table = _as(table, alias)
+            table = ((table, alias),)
         return select(table, **kwargs)
 
     def resolve(self):

@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 def _as(src, dest):
     if isinstance(src, LazyFunction):
         src = src.resolve()
-    return raw('%s AS %s' % (identifier(src), identifier(dest)))
+    return (src, dest)
 
 
 class MoQuerySet(object):
@@ -122,7 +122,8 @@ class MoQuerySet(object):
 
         if params['joins']:
             params['joins'] = [
-                join(table=_as(*j.pop('table')), **j) for j in params['joins']
+                join(table=(_as(*j.pop('table')),), **j)
+                for j in params['joins']
             ]
 
         table = self.model._meta.db_table

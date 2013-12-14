@@ -5,7 +5,7 @@ __all__ = [
     'LazyFunction', 'Avg', 'Count', 'Min', 'Max', 'Stddev', 'Sum', 'Variance'
 ]
 
-from . import _func as _
+from mosql import func as _
 
 
 class LazyFunction(object):

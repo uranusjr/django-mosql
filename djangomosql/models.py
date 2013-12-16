@@ -147,8 +147,9 @@ class MoQuerySet(object):
             if self._params['group_by'] and vendor != 'sqlite':
                 kwargs['select'] = [
                     raw('MIN({table}.{field}) AS {field}'.format(
-                        table=identifier(table_name), field=identifier(field)
-                    )) for field in self.model._meta.get_all_field_names()
+                        table=identifier(table_name),
+                        field=identifier(field.db_column or field.name)
+                    )) for field in self.model._meta.fields
                 ]
             else:
                 kwargs['select'] = [

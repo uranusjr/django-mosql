@@ -171,7 +171,7 @@ class FruitMoSQLTests(FastFixtureTestCase):
             products = FruitProduct.objects.db_manager(db).select().as_('f')
             expect = 'SELECT "f".* FROM "djangomosqltest_fruitproduct" AS "f"'
             if db == 'mysql':
-                expect = 'SELECT `f`.* FROM `djangomosqltest_fruitproduct` AS `f`'
+                expect = expect.replace('"', '`')
             eq_(products.query, expect)
 
     def test_subquery(self):

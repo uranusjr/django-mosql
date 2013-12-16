@@ -112,7 +112,7 @@ class MoQuerySet(object):
             pass
         elif vendor == 'mysql':
             patch = patches.mysql
-        elif vendor in ('sqlite', 'sqlite3'):
+        elif vendor == 'sqlite':
             patch = patches.sqlite
         else:
             msg = (
@@ -131,10 +131,31 @@ class MoQuerySet(object):
 
             table = self.model._meta.db_table
             alias = params.pop('alias', None)
-            star = raw('{table}.*'.format(table=identifier(alias or table)))
 
             kwargs = {k: v for k, v in params.items() if v}
-            kwargs['select'] = [star] + [_as(*f) for f in self.extra_fields]
+
+            # Inject default field names.
+            # If this query does not contain a GROUP BY clause, we can safely
+            #   use a "*" to indicate all fields;
+            # If the query has aggregation (GROUP BY), however, we will need to
+            #   choose a value to display for each field (especially pk because
+            #   it is needed by Django). Since ccessing those fields doesn't
+            #   really make sense anyway, We arbitrarily use MIN. But this fix
+            #   does not work on SQLite, and in which case we'll fallback to
+            #   the non-strict syntax.
+            table_name = alias or table
+            if self._params['group_by'] and vendor != 'sqlite':
+                kwargs['select'] = [
+                    raw('MIN({table}.{field}) AS {field}'.format(
+                        table=identifier(table_name), field=identifier(field)
+                    )) for field in self.model._meta.get_all_field_names()
+                ]
+            else:
+                kwargs['select'] = [
+                    raw('{table}.*'.format(table=identifier(table_name)))
+                ]
+
+            kwargs['select'] += [_as(*f) for f in self.extra_fields]
             if 'offset' in kwargs and 'limit' not in kwargs:
                 kwargs['limit'] = current_connection.ops.no_limit_value()
 

@@ -16,7 +16,7 @@ setup(
     version=VERSION,
     packages=['djangomosql'],
     include_package_data=True,
-    install_requires=['django>=1.4', 'mosql>=0.6'],
+    install_requires=['django>=1.4.2', 'mosql>=0.8'],
     license='BSD License',
     description='Django model integration for MoSQL.',
     long_description=README,

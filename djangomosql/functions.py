@@ -1,29 +1,44 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
 
-"""Implements MoSQL convinience functions until they go into master.
-"""
+__all__ = [
+    'LazyFunction', 'Avg', 'Count', 'Min', 'Max', 'Stddev', 'Sum', 'Variance'
+]
 
-__all__ = ['Avg', 'Count', 'Min', 'Max', 'Stddev', 'Sum', 'Variance']
-
-from mosql.util import raw, concat_by_comma, identifier
-
-
-def _make_simple_function(name):
-
-    def simple_function(*args):
-        return raw('%s(%s)' % (
-            name.upper(),
-            concat_by_comma(identifier(x) for x in args)
-        ))
-
-    return simple_function
+from mosql import func as _
 
 
-Avg = _make_simple_function('AVG')
-Count = _make_simple_function('COUNT')
-Min = _make_simple_function('MIN')
-Max = _make_simple_function('MAX')
-Stddev = _make_simple_function('STDDEV')
-Sum = _make_simple_function('SUM')
-Variance = _make_simple_function('VARIANCE')
+class LazyFunction(object):
+    def __init__(self, *args):
+        self._args = args
+
+    def resolve(self):
+        return self.function(*self._args)
+
+
+class Avg(LazyFunction):
+    function = staticmethod(_.avg)
+
+
+class Count(LazyFunction):
+    function = staticmethod(_.count)
+
+
+class Min(LazyFunction):
+    function = staticmethod(_.min)
+
+
+class Max(LazyFunction):
+    function = staticmethod(_.max)
+
+
+class Stddev(LazyFunction):
+    function = staticmethod(_.stddev)
+
+
+class Sum(LazyFunction):
+    function = staticmethod(_.sum)
+
+
+class Variance(LazyFunction):
+    function = staticmethod(_.variance)

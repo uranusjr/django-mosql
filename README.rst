@@ -21,7 +21,7 @@ Because I want to use raw SQL, but am too lazy to worry about security issues.
 Long version
 +++++++++++++
 
-Django's ORM is cool. And powerful. But ORMs are destined to be leaky, and can't do everything you wish to. That's why Django provides ``raw`` and ``extra`` so that you can roll your own SQL commands if you need to. But with great power comes great responsibility. You lose all the SQL security measures Django provides when you use those methods, and it can be a serious problem unless you are untra careful.
+Django's ORM is cool. And powerful. But ORMs are destined to be leaky, and can't do everything you wish to. That's why Django provides ``raw`` and ``extra`` so that you can roll your own SQL commands if you need to. But with great power comes great responsibility. You lose all the SQL security measures Django provides when you use those methods, and it can be a serious problem unless you are ultra careful.
 
 Enters MoSQL_. MoSQL, in a nutshell, is a tool that generates SQL commands automatically from Python function calls. And it takes care of the injection prevention for you. A perfect match with Django's ``raw``!
 
@@ -40,7 +40,7 @@ Let's say you have the following model::
         variety = models.CharField(max_length=10)
         price = models.FloatField()
 
-Then all you need is to provide a ``MoManager`` as one of its model managers. Add ``djangomosql`` to your ``INSTALLED_APPS``, and modify the code like this::
+Then you only need to provide a ``MoManager`` as one of its model managers. Add ``djangomosql`` to your ``INSTALLED_APPS``, and modify the code like this::
 
     from djangomosql.models import MoManager
 
@@ -61,7 +61,7 @@ Which is roughly equivalent to
 
 ::
 
-    SELECT fruit.*, MIN(price) as minprice GROUP BY kind ORDER BY kind DESC
+    SELECT fruit.*, MIN(price) as minprice FROM fruit GROUP BY kind ORDER BY kind DESC
 
 Of course, this won't be of much use if we can only do things Django's ORM can. With Django MoSQL, you can achieve many funky things, like::
 

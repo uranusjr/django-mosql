@@ -148,7 +148,7 @@ class MoQuerySet(object):
                 kwargs['select'] = [
                     raw('MIN({table}.{field}) AS {field}'.format(
                         table=identifier(table_name),
-                        field=identifier(field.db_column or field.name)
+                        field=identifier(field.get_attname_column()[1])
                     )) for field in self.model._meta.fields
                 ]
             else:

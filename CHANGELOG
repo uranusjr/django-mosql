@@ -1,3 +1,6 @@
+v0.3.1
+* Fix field name lookup for foreign keys when generating an aggregation query.
+
 v0.3
 * Correctly handle formats if the environment contains multiple database
   backends.

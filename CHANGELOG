@@ -1,7 +1,14 @@
+v0.3
+* Correctly handle formats if the environment contains multiple database
+  backends.
+* Rewrite SQLL function formatting with built-in tools in MoSQL 0.8.
+* Add "select" method in MoQuerySet to enable subsequent field addition
+  after filtering.
+* Fix broken parameters when a query is accessed multiple times.
+
 v0.2
 * Implement LIMIT and OFFSET with slicing syntax.
 * Support raw table names when using JOIN
 
 v0.1
 Initial release.
-

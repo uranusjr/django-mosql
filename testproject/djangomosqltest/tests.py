@@ -97,6 +97,39 @@ class EmployeeMoSQLTests(FastFixtureTestCase):
             ok_(p.fn)
 
 
+# These tests change states of the database, and therefore require database
+# refreshes between them.
+class EmployeeMoSQLMutableTests(TestCase):
+
+    fixtures = ['employees']
+    multi_db = True
+
+    def test_delete_simple(self):
+        for db in settings.DATABASES:
+            people = Employee.objects.db_manager(db).select().where({
+                'first_name': 'Mosky'
+            })
+            eq_(people.count(), 1)
+
+            row_count = people.delete()
+            eq_(row_count, 1)       # One row affected
+
+            eq_(people.count(), 0)
+
+    def test_delete_non_simple(self):
+        for db in settings.DATABASES:
+            # One simple "AS" breaks the smart syntax
+            people = Employee.objects.db_manager(db).select().as_('e').where({
+                'first_name': 'Mosky'
+            })
+            eq_(people.count(), 1)
+
+            row_count = people.delete()
+            eq_(row_count, 1)       # One row affected
+
+            eq_(people.count(), 0)
+
+
 # Tests in this class originates from
 # http://www.xaprb.com/blog/2006/12/07/how-to-select-the-firstleastmax-row-per-group-in-sql/
 class FruitMoSQLTests(FastFixtureTestCase):

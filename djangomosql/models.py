@@ -6,12 +6,12 @@ __all__ = ['MoQuerySet', 'MoManager']
 import copy
 import inspect
 import logging
-from django.db import connections
+from django.db import connections, transaction
 from django.db.models import Model, Manager, get_model
 from django.db.models.query import RawQuerySet
 from django.db.utils import DEFAULT_DB_ALIAS
 from django.utils import six
-from mosql.query import select, join
+from mosql.query import select, join, delete
 from mosql.util import raw, identifier, paren
 from . import patches
 try:
@@ -20,6 +20,24 @@ except NameError:   # If basestring is not a thing, just alias it to str
     basestring = str
 
 logger = logging.getLogger(__name__)
+
+
+def _get_patch(vendor):
+    # Import MoSQL's detabase specific fixes
+    patch = patches.EnginePatcher({})   # NOOP context manager
+    if vendor == 'postgresql':
+        pass
+    elif vendor == 'mysql':
+        patch = patches.mysql()
+    elif vendor == 'sqlite':
+        patch = patches.sqlite()
+    else:
+        msg = (
+            'Current database ({vendor}) not supported by MoSQL. '
+            'Will generate standard SQL instead.'
+        ).format(vendor=vendor)
+        logger.warning(msg)
+    return patch
 
 
 class MoQuerySet(object):
@@ -96,25 +114,57 @@ class MoQuerySet(object):
 
     @property
     def query(self):
-        """The raw SQL that will be used to resolve the queryset."""
-        # Import MoSQL's detabase specific fixes
+        return self._get_select_query()
+
+    def delete(self):
+        """Delete objects selected by the QuerySet"""
+        # Try to keep things simple by resolving a direct DELETE ... WHERE ...
+        # query. If that proves impossible, fallback to the naive DELETE ...
+        # WHERE <pk> IN (SELECT ...) solution.
+        params = copy.deepcopy(self._params)
+        where = params.pop('where')
+
         current_connection = connections[self._db or DEFAULT_DB_ALIAS]
         vendor = current_connection.vendor
-        patch = lambda: patches.EnginePatcher({})   # NOOP context manager
-        if vendor == 'postgresql':
-            pass
-        elif vendor == 'mysql':
-            patch = patches.mysql
-        elif vendor == 'sqlite':
-            patch = patches.sqlite
-        else:
-            msg = (
-                'Current database ({vendor}) not supported by MoSQL. '
-                'Will generate standard SQL instead.'
-            ).format(vendor=vendor)
-            logger.warning(msg)
+        table = self.model._meta.db_table
 
-        with patch():
+        with _get_patch(vendor):
+            if any(params.values()):
+                # If any of the remaining params is not empty, play safe and
+                # fallback to subquery
+                pkname, pkcol = self.model._meta.pk.get_attname_column()
+                subquery = self._get_select_query([pkcol])
+
+                if vendor == 'mysql':
+                    # MySQL does not support using the target table in
+                    # subqueries. This is very tricky because there might be
+                    # nested subqueries. Falling back to using TWO queries:
+                    # select the IDs, and then pass them to delete.
+                    queryset = RawQuerySet(
+                        raw_query=subquery, model=self.model, using=self._db
+                    )
+                    value = [str(getattr(obj, pkname)) for obj in queryset]
+                else:
+                    value = raw(paren(subquery))
+
+                key = '{pkcol} IN'.format(pkcol=pkcol)
+                query = delete(table, where={key: value})
+            else:
+                # Try to be smart
+                query = delete(table, where=where)
+
+        # Execute the query
+        cursor = current_connection.cursor()
+        cursor.execute(query)
+        transaction.commit_unless_managed()
+        return cursor.rowcount
+
+    def _get_select_query(self, fields=None):
+        """The raw SQL that will be used to resolve the queryset."""
+        current_connection = connections[self._db or DEFAULT_DB_ALIAS]
+        vendor = current_connection.vendor
+
+        with _get_patch(vendor):
             params = copy.deepcopy(self._params)
             if params['joins']:
                 params['joins'] = [
@@ -137,7 +187,14 @@ class MoQuerySet(object):
             #   does not work on SQLite, and in which case we'll fallback to
             #   the non-strict syntax.
             table_name = alias or table
-            if self._params['group_by'] and vendor != 'sqlite':
+
+            if fields is not None:
+                kwargs['select'] = [
+                    f if '.' in f else raw('{table}.{field}'.format(
+                        table=identifier(table_name), field=identifier(f))
+                    ) for f in fields
+                ]
+            elif self._params['group_by'] and vendor != 'sqlite':
                 kwargs['select'] = [
                     raw('MIN({table}.{field}) AS {field}'.format(
                         table=identifier(table_name),

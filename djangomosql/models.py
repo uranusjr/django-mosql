@@ -140,7 +140,6 @@ class MoQuerySet(object):
             if alias:
                 table = ((table, alias),)
             query = select(table, **kwargs)
-            print handler, query
             return query
 
     @property

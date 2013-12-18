@@ -1,3 +1,9 @@
+v0.4
+* Now requires MoSQL 0.8.1.
+* Database engine-specific fixes are now better handled.
+* Implement "queryset delete".
+* SQL functions are re-implemented with lazy string evaluation.
+
 v0.3.1
 * Fix field name lookup for foreign keys when generating an aggregation query.
 

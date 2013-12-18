@@ -19,7 +19,7 @@ class EnginePatcher(object):
     """This class implements the context manager interface for syntax patching.
     """
     def __init__(self, patches):
-        """Initialize a :class:`Patcher` object.
+        """Initialize a :class:`EnginePatcher` object.
 
         :param patches: a mapping of members to be patched
         :type patches: `dict`

@@ -9,11 +9,10 @@ from .utils import patch_map, Patcher
 
 
 class EngineHandler(object):
-    def __init__(self, connection):
+    def __init__(self, connection, vendor):
         super(EngineHandler, self).__init__()
-        self.name = type(self).__name__
         self.connection = connection
-        self.patch_dict = patch_map.get(self.name, {})
+        self.patch_dict = patch_map.get(vendor, {})
 
     def __repr__(self):
         return '<EngineHandler: {name}>'.format(name=self.name)
@@ -72,4 +71,4 @@ class sqlite(EngineHandler):
 def get_engine_handler(database=None):
     connection = connections[database or DEFAULT_DB_ALIAS]
     vendor = connection.vendor
-    return globals().get(vendor, EngineHandler)(connection)
+    return globals().get(vendor, EngineHandler)(connection, vendor)

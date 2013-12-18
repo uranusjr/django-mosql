@@ -1,11 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
 
+import logging
 from django.db import connections
 from django.db.models.query import RawQuerySet
 from django.db.utils import DEFAULT_DB_ALIAS
 from mosql.util import raw, paren, identifier
 from .utils import patch_map, Patcher
+
+
+logger = logging.getLogger(__name__)
 
 
 class EngineHandler(object):
@@ -72,4 +76,12 @@ class sqlite(EngineHandler):
 def get_engine_handler(database=None):
     connection = connections[database or DEFAULT_DB_ALIAS]
     vendor = connection.vendor
-    return globals().get(vendor, EngineHandler)(connection, vendor)
+    handler_class = globals().get(vendor)
+    if handler_class is None:
+        msg = (
+            'Current database ({vendor}) not supported by MoSQL. '
+            'Will generate standard SQL instead.'
+        ).format(vendor=vendor)
+        logger.warning(msg)
+        handler_class = EngineHandler
+    return handler_class(connection, vendor)

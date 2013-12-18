@@ -5,7 +5,6 @@ __all__ = ['MoQuerySet', 'MoManager']
 
 import copy
 import inspect
-import logging
 from django.db import transaction
 from django.db.models import Model, Manager, get_model
 from django.db.models.query import RawQuerySet
@@ -17,8 +16,6 @@ try:
     basestring
 except NameError:   # If basestring is not a thing, just alias it to str
     basestring = str
-
-logger = logging.getLogger(__name__)
 
 
 class MoQuerySet(object):

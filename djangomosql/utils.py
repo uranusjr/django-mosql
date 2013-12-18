@@ -13,5 +13,14 @@ class LazyString(object):
     def __str__(self):
         return self._func()
 
+    def __iter__(self):
+        return iter(str(self))
+
+    def __len__(self):
+        return len(str(self))
+
+    def __getitem__(self, k):
+        return str(self)[k]
+
     def __getattr__(self, key):
         return getattr(str(self), key)

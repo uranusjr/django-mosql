@@ -2,10 +2,13 @@
 # -*- coding: utf-8 -*-
 
 from django.conf import settings
+from django.db import connections
 from django.test import TestCase
 from django_nose import FastFixtureTestCase
 from nose.tools import ok_, eq_, assert_not_equal, assert_false, assert_raises
 from djangomosql.functions import Min
+from djangomosql.utils import LazyString
+from djangomosql.db.handlers import get_engine_handler
 from .models import Employee, Department, FruitProduct
 try:
     basestring
@@ -14,7 +17,23 @@ except NameError:   # If basestring is not a thing, just alias it to str
 
 
 class BasicTests(TestCase):
-    def test_repr(self):
+    def test_lazy_string(self):
+        text = 'lorem ipsum'
+        lazystr = LazyString(lambda: text)
+
+        eq_(len(lazystr), len(text))
+        eq_(lazystr[0], 'l')
+        eq_(lazystr[:5], 'lorem')
+        for c1, c2 in zip(lazystr, text):
+            eq_(c1, c2)
+        eq_(lazystr.capitalize(), 'Lorem ipsum')
+
+
+class ReprTests(TestCase):
+
+    multi_db = True
+
+    def test_queryset(self):
         queryset = Employee.objects.select().where({'first_name': 'Mosky'})
         result = (
             '<MoQuerySet: SELECT "{table}".* FROM "{table}"'
@@ -23,6 +42,13 @@ class BasicTests(TestCase):
             )
         )
         eq_(repr(queryset), result)
+
+    def test_handler(self):
+        for db in settings.DATABASES:
+            handler = get_engine_handler(db)
+            eq_(repr(handler), '<EngineHandler: {vendor}>'.format(
+                vendor=connections[db].vendor
+            ))
 
 
 class EmployeeMoSQLTests(FastFixtureTestCase):

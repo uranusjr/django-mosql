@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from pkg_resources import get_distribution
 from django.conf import settings
 from django.test import TestCase
 from django_nose import FastFixtureTestCase
 from nose.tools import ok_, eq_, assert_not_equal, assert_false, assert_raises
-import djangomosql
 from djangomosql.functions import Min
 from .models import Employee, Department, FruitProduct
 try:
@@ -16,9 +14,6 @@ except NameError:   # If basestring is not a thing, just alias it to str
 
 
 class BasicTests(TestCase):
-    def test_version(self):
-        eq_(get_distribution('django-mosql').version, djangomosql.__version__)
-
     def test_repr(self):
         queryset = Employee.objects.select().where({'first_name': 'Mosky'})
         result = (

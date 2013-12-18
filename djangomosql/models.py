@@ -14,19 +14,12 @@ from django.utils import six
 from mosql.query import select, join
 from mosql.util import raw, identifier, paren
 from . import patches
-from .functions import LazyFunction
 try:
     basestring
 except NameError:   # If basestring is not a thing, just alias it to str
     basestring = str
 
 logger = logging.getLogger(__name__)
-
-
-def _as(src, dest):
-    if isinstance(src, LazyFunction):
-        src = src.resolve()
-    return (src, dest)
 
 
 class MoQuerySet(object):
@@ -125,7 +118,7 @@ class MoQuerySet(object):
             params = copy.deepcopy(self._params)
             if params['joins']:
                 params['joins'] = [
-                    join(table=(_as(*j.pop('table')),), **j)
+                    join(table=(j.pop('table'),), **j)
                     for j in params['joins']
                 ]
 
@@ -156,13 +149,15 @@ class MoQuerySet(object):
                     raw('{table}.*'.format(table=identifier(table_name)))
                 ]
 
-            kwargs['select'] += [_as(*f) for f in self.extra_fields]
+            kwargs['select'].extend(self.extra_fields)
             if 'offset' in kwargs and 'limit' not in kwargs:
                 kwargs['limit'] = current_connection.ops.no_limit_value()
 
             if alias:
                 table = ((table, alias),)
-            return select(table, **kwargs)
+            query = select(table, **kwargs)
+            print query
+            return query
 
     def resolve(self):
         """Resolve the queryset."""

@@ -1,44 +1,46 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
 
-__all__ = [
-    'LazyFunction', 'Avg', 'Count', 'Min', 'Max', 'Stddev', 'Sum', 'Variance'
-]
+__all__ = ['Avg', 'Count', 'Min', 'Max', 'Stddev', 'Sum', 'Variance']
 
 from mosql import func as _
+from mosql.util import raw
+from .utils import LazyString
 
 
-class LazyFunction(object):
-    def __init__(self, *args):
-        self._args = args
+class LazyValueGenerator(LazyString):
 
-    def resolve(self):
-        return self.function(*self._args)
+    __class__ = raw
+
+    def __init__(self, *args, **kwargs):
+        super(LazyValueGenerator, self).__init__(
+            lambda: self.function(*args, **kwargs)
+        )
 
 
-class Avg(LazyFunction):
+class Avg(LazyValueGenerator):
     function = staticmethod(_.avg)
 
 
-class Count(LazyFunction):
+class Count(LazyValueGenerator):
     function = staticmethod(_.count)
 
 
-class Min(LazyFunction):
+class Min(LazyValueGenerator):
     function = staticmethod(_.min)
 
 
-class Max(LazyFunction):
+class Max(LazyValueGenerator):
     function = staticmethod(_.max)
 
 
-class Stddev(LazyFunction):
+class Stddev(LazyValueGenerator):
     function = staticmethod(_.stddev)
 
 
-class Sum(LazyFunction):
+class Sum(LazyValueGenerator):
     function = staticmethod(_.sum)
 
 
-class Variance(LazyFunction):
+class Variance(LazyValueGenerator):
     function = staticmethod(_.variance)

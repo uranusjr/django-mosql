@@ -69,7 +69,7 @@ class sqlite(EngineHandler):
         return self.get_star(queryset)
 
 
-def engine_handler_factory(database=None):
+def get_engine_handler(database=None):
     connection = connections[database or DEFAULT_DB_ALIAS]
     vendor = connection.vendor
     return globals().get(vendor, EngineHandler)(connection)

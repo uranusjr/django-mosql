@@ -12,7 +12,7 @@ from django.db.models.query import RawQuerySet
 from django.utils import six
 from mosql.query import select, join, delete
 from mosql.util import raw, identifier, paren
-from .db.handlers import engine_handler_factory
+from .db.handlers import get_engine_handler
 try:
     basestring
 except NameError:   # If basestring is not a thing, just alias it to str
@@ -95,7 +95,7 @@ class MoQuerySet(object):
 
     def _get_select_query(self, fields=None):
         """The raw SQL that will be used to resolve the queryset."""
-        handler = engine_handler_factory(self._db)
+        handler = get_engine_handler(self._db)
 
         with handler.patch():
             params = copy.deepcopy(self._params)
@@ -151,7 +151,7 @@ class MoQuerySet(object):
         # Try to keep things simple by resolving a direct DELETE ... WHERE ...
         # query. If that proves impossible, fallback to the naive DELETE ...
         # WHERE <pk> IN (SELECT ...) solution.
-        handler = engine_handler_factory(self._db)
+        handler = get_engine_handler(self._db)
         table = self.model._meta.db_table
 
         params = copy.deepcopy(self._params)

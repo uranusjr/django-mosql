@@ -3,13 +3,15 @@
 
 
 class LazyString(object):
+
+    __class__ = str
+
     def __init__(self, func):
         super(LazyString, self).__init__()
         self._func = func
 
     def __str__(self):
-        value = self._func()
-        return value
+        return self._func()
 
     def __getattr__(self, key):
         return getattr(str(self), key)

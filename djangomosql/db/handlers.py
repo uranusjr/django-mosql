@@ -12,6 +12,7 @@ class EngineHandler(object):
     def __init__(self, connection, vendor):
         super(EngineHandler, self).__init__()
         self.connection = connection
+        self.name = vendor
         self.patch_dict = patch_map.get(vendor, {})
 
     def __repr__(self):

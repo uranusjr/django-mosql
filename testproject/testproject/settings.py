@@ -115,3 +115,9 @@ STATIC_URL = '/static/'
 # Testing
 
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
+
+NOSE_ARGS = [
+    '--cover-package=djangomosql',
+    '--with-coverage',
+    '--cover-erase'
+]

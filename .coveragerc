@@ -1,0 +1,2 @@
+[report]
+omit = djangomosql/__init__.py

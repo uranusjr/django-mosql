@@ -6,38 +6,19 @@ __all__ = ['MoQuerySet', 'MoManager']
 import copy
 import inspect
 import logging
-from django.db import connections, transaction
+from django.db import transaction
 from django.db.models import Model, Manager, get_model
 from django.db.models.query import RawQuerySet
-from django.db.utils import DEFAULT_DB_ALIAS
 from django.utils import six
 from mosql.query import select, join, delete
 from mosql.util import raw, identifier, paren
-from . import patches
+from .db.handlers import engine_handler_factory
 try:
     basestring
 except NameError:   # If basestring is not a thing, just alias it to str
     basestring = str
 
 logger = logging.getLogger(__name__)
-
-
-def _get_patch(vendor):
-    # Import MoSQL's detabase specific fixes
-    patch = patches.EnginePatcher({})   # NOOP context manager
-    if vendor == 'postgresql':
-        pass
-    elif vendor == 'mysql':
-        patch = patches.mysql()
-    elif vendor == 'sqlite':
-        patch = patches.sqlite()
-    else:
-        msg = (
-            'Current database ({vendor}) not supported by MoSQL. '
-            'Will generate standard SQL instead.'
-        ).format(vendor=vendor)
-        logger.warning(msg)
-    return patch
 
 
 class MoQuerySet(object):
@@ -112,59 +93,11 @@ class MoQuerySet(object):
             clone._params[k] = copy.copy(self._params[k])
         return clone
 
-    @property
-    def query(self):
-        return self._get_select_query()
-
-    def delete(self):
-        """Delete objects selected by the QuerySet"""
-        # Try to keep things simple by resolving a direct DELETE ... WHERE ...
-        # query. If that proves impossible, fallback to the naive DELETE ...
-        # WHERE <pk> IN (SELECT ...) solution.
-        params = copy.deepcopy(self._params)
-        where = params.pop('where')
-
-        current_connection = connections[self._db or DEFAULT_DB_ALIAS]
-        vendor = current_connection.vendor
-        table = self.model._meta.db_table
-
-        with _get_patch(vendor):
-            if any(params.values()):
-                # If any of the remaining params is not empty, play safe and
-                # fallback to subquery
-                pkname, pkcol = self.model._meta.pk.get_attname_column()
-                subquery = self._get_select_query([pkcol])
-
-                if vendor == 'mysql':
-                    # MySQL does not support using the target table in
-                    # subqueries. This is very tricky because there might be
-                    # nested subqueries. Falling back to using TWO queries:
-                    # select the IDs, and then pass them to delete.
-                    queryset = RawQuerySet(
-                        raw_query=subquery, model=self.model, using=self._db
-                    )
-                    value = [str(getattr(obj, pkname)) for obj in queryset]
-                else:
-                    value = raw(paren(subquery))
-
-                key = '{pkcol} IN'.format(pkcol=pkcol)
-                query = delete(table, where={key: value})
-            else:
-                # Try to be smart
-                query = delete(table, where=where)
-
-        # Execute the query
-        cursor = current_connection.cursor()
-        cursor.execute(query)
-        transaction.commit_unless_managed()
-        return cursor.rowcount
-
     def _get_select_query(self, fields=None):
         """The raw SQL that will be used to resolve the queryset."""
-        current_connection = connections[self._db or DEFAULT_DB_ALIAS]
-        vendor = current_connection.vendor
+        handler = engine_handler_factory(self._db)
 
-        with _get_patch(vendor):
+        with handler.patch():
             params = copy.deepcopy(self._params)
             if params['joins']:
                 params['joins'] = [
@@ -183,37 +116,62 @@ class MoQuerySet(object):
             # If the query has aggregation (GROUP BY), however, we will need to
             #   choose a value to display for each field (especially pk because
             #   it is needed by Django). Since ccessing those fields doesn't
-            #   really make sense anyway, We arbitrarily use MIN. But this fix
-            #   does not work on SQLite, and in which case we'll fallback to
-            #   the non-strict syntax.
+            #   really make sense anyway, We arbitrarily use MIN.
             table_name = alias or table
 
             if fields is not None:
                 kwargs['select'] = [
-                    f if '.' in f else raw('{table}.{field}'.format(
+                    f if '.' in f or isinstance(f, raw)
+                    else raw('{table}.{field}'.format(
                         table=identifier(table_name), field=identifier(f))
                     ) for f in fields
                 ]
-            elif self._params['group_by'] and vendor != 'sqlite':
-                kwargs['select'] = [
-                    raw('MIN({table}.{field}) AS {field}'.format(
-                        table=identifier(table_name),
-                        field=identifier(field.get_attname_column()[1])
-                    )) for field in self.model._meta.fields
-                ]
+            elif self._params['group_by']:
+                kwargs['select'] = (
+                    handler.get_aggregated_columns_for_group_by(self, 'MIN')
+                )
             else:
-                kwargs['select'] = [
-                    raw('{table}.*'.format(table=identifier(table_name)))
-                ]
+                kwargs['select'] = handler.get_star(self)
 
             kwargs['select'].extend(self.extra_fields)
             if 'offset' in kwargs and 'limit' not in kwargs:
-                kwargs['limit'] = current_connection.ops.no_limit_value()
+                kwargs['limit'] = handler.no_limit_value()
 
             if alias:
                 table = ((table, alias),)
             query = select(table, **kwargs)
+            print handler, query
             return query
+
+    @property
+    def query(self):
+        return self._get_select_query()
+
+    def delete(self):
+        """Delete objects selected by the QuerySet"""
+        # Try to keep things simple by resolving a direct DELETE ... WHERE ...
+        # query. If that proves impossible, fallback to the naive DELETE ...
+        # WHERE <pk> IN (SELECT ...) solution.
+        handler = engine_handler_factory(self._db)
+        table = self.model._meta.db_table
+
+        params = copy.deepcopy(self._params)
+        where = params.pop('where')
+
+        with handler.patch():
+            if any(params.values()):
+                # If any of the remaining params is not empty, play safe and
+                # fallback to subquery
+                query = delete(table, where=handler.get_where_for_delete(self))
+            else:
+                # Try to be smart
+                query = delete(table, where=where)
+
+        # Execute the query
+        cursor = handler.cursor()
+        cursor.execute(query)
+        transaction.commit_unless_managed()
+        return cursor.rowcount
 
     def resolve(self):
         """Resolve the queryset."""

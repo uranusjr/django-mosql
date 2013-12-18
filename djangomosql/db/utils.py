@@ -15,7 +15,7 @@ for k in backup:
     setattr(util, k, backup[k])
 
 
-class EnginePatcher(object):
+class Patcher(object):
     """This class implements the context manager interface for syntax patching.
     """
     def __init__(self, patches):
@@ -39,15 +39,14 @@ class EnginePatcher(object):
             setattr(mosql.util, k, v)
 
 
-def mysql():
-    patches = {
+patch_map = {
+    'mysql': {
         'escape': mosql.mysql.fast_escape,
         'format_param': mosql.mysql.format_param,
         'delimit_identifier': mosql.mysql.delimit_identifier,
         'escape_identifier': mosql.mysql.escape_identifier
+    },
+    'sqlite': {
+        'format_param': mosql.sqlite.format_param
     }
-    return EnginePatcher(patches)
-
-
-def sqlite():
-    return EnginePatcher({'format_param': mosql.sqlite.format_param})
+}

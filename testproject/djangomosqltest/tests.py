@@ -5,7 +5,9 @@ from django.conf import settings
 from django.db import connections
 from django.test import TestCase
 from django_nose import FastFixtureTestCase
-from nose.tools import ok_, eq_, assert_not_equal, assert_false, assert_raises
+from nose.tools import (
+    ok_, eq_, assert_not_equal, assert_false, assert_raises, assert_is_none
+)
 from djangomosql.functions import Min
 from djangomosql.utils import LazyString
 from djangomosql.db.handlers import get_engine_handler
@@ -149,6 +151,26 @@ class EmployeeMoSQLMutableTests(TestCase):
             eq_(row_count, 1)       # One row affected
 
             eq_(people.count(), 0)
+
+    def test_select_relation(self):
+        for db in settings.DATABASES:
+            dev_team = Department.objects.db_manager(db).get(name='Dev Team')
+
+            dev_guy = (
+                Employee.objects.db_manager(db)
+                        .select()
+                        .group_by('department_id')
+                        .where({'department_id': dev_team.id})
+            )[0]
+            eq_(dev_guy.department, dev_team)
+
+            neet = (
+                Employee.objects.db_manager(db)
+                        .select()
+                        .group_by('department_id')
+                        .where({'department_id': None})
+            )[0]
+            assert_is_none(neet.department)
 
 
 # Tests in this class originates from

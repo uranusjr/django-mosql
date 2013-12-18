@@ -213,7 +213,6 @@ class MoQuerySet(object):
             if alias:
                 table = ((table, alias),)
             query = select(table, **kwargs)
-            print query
             return query
 
     def resolve(self):

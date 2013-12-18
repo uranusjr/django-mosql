@@ -47,4 +47,3 @@ class FruitProduct(models.Model):
 
     def __unicode__(self):
         return _('%s %s ($%.2f)' % (self.variety, self.kind, self.price))
-

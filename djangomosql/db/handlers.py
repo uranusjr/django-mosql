@@ -46,8 +46,8 @@ class EngineHandler(object):
         return [
             raw('{func}({table}.{field}) AS {field}'.format(
                 func=aggregate, table=identifier(table),
-                field=identifier(field.get_attname_column()[1])
-            )) for field in queryset.model._meta.fields
+                field=identifier(field.get_attname_column()[1])))
+            for field in queryset.model._meta.fields
         ]
 
 

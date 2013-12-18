@@ -5,47 +5,42 @@ __all__ = ['Avg', 'Count', 'Min', 'Max', 'Stddev', 'Sum', 'Variance']
 
 from mosql import func as _
 from mosql.util import raw
+from .utils import LazyString
 
 
-class LazyStringGenerator(object):
+class LazyValueGenerator(LazyString):
 
     __class__ = raw
 
     def __init__(self, *args, **kwargs):
-        super(LazyStringGenerator, self).__init__()
-        self._args = args
-        self._kwargs = kwargs
-
-    def __str__(self):
-        return self.function(*self._args, **self._kwargs)
-
-    def __getattr__(self, key):
-        return getattr(str(self), key)
+        super(LazyValueGenerator, self).__init__(
+            lambda: self.function(*args, **kwargs)
+        )
 
 
-class Avg(LazyStringGenerator):
+class Avg(LazyValueGenerator):
     function = staticmethod(_.avg)
 
 
-class Count(LazyStringGenerator):
+class Count(LazyValueGenerator):
     function = staticmethod(_.count)
 
 
-class Min(LazyStringGenerator):
+class Min(LazyValueGenerator):
     function = staticmethod(_.min)
 
 
-class Max(LazyStringGenerator):
+class Max(LazyValueGenerator):
     function = staticmethod(_.max)
 
 
-class Stddev(LazyStringGenerator):
+class Stddev(LazyValueGenerator):
     function = staticmethod(_.stddev)
 
 
-class Sum(LazyStringGenerator):
+class Sum(LazyValueGenerator):
     function = staticmethod(_.sum)
 
 
-class Variance(LazyStringGenerator):
+class Variance(LazyValueGenerator):
     function = staticmethod(_.variance)

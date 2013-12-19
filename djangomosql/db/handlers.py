@@ -77,7 +77,7 @@ def get_engine_handler(database=None):
     connection = connections[database or DEFAULT_DB_ALIAS]
     vendor = connection.vendor
     handler_class = globals().get(vendor)
-    if handler_class is None:
+    if handler_class is None:   # pragma: no cover
         msg = (
             'Current database ({vendor}) not supported by MoSQL. '
             'Will generate standard SQL instead.'

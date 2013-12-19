@@ -103,16 +103,53 @@ class EmployeeMoSQLTests(FastFixtureTestCase):
                 ok_(hasattr(p, 'department_name'))
 
     def test_join_lazy(self):
-        people = Employee.objects.select(('d.name', 'department_name')).join(
-            'djangomosqltest.Department', 'd', on={'department_id': 'd.id'})
-        for p in people:
-            ok_(hasattr(p, 'department_name'))
+        for db in settings.DATABASES:
+            people = (
+                Employee.objects.db_manager(db)
+                        .select(('d.name', 'department_name'))
+                        .join('djangomosqltest.Department', 'd',
+                              on={'department_id': 'd.id'})
+            )
+            for p in people:
+                ok_(hasattr(p, 'department_name'))
 
     def test_join_raw(self):
-        people = Employee.objects.select(('d.name', 'department_name')).join(
-            'djangomosqltest_department', 'd', on={'department_id': 'd.id'})
-        for p in people:
-            ok_(hasattr(p, 'department_name'))
+        for db in settings.DATABASES:
+            people = (
+                Employee.objects.db_manager(db)
+                        .select(('d.name', 'department_name'))
+                        .join('djangomosqltest_department', 'd',
+                              on={'department_id': 'd.id'})
+            )
+            for p in people:
+                ok_(hasattr(p, 'department_name'))
+
+    def test_join_incorrect_target(self):
+        for db in settings.DATABASES:
+            with assert_raises(TypeError):
+                Employee.objects.db_manager(db).select(
+                    ('d.name', 'department_name')
+                ).join(Employee(), 'd', on={'department_id': 'd.id'})
+
+    def test_join_type(self):
+        for db in settings.DATABASES:
+            for join_type in ('INNER', 'CROSS', 'LEFT', 'RIGHT'):
+                people = (
+                    Employee.objects.db_manager(db)
+                            .select(('d.name', 'department_name'))
+                            .join('djangomosqltest.Department', 'd',
+                                  on={'department_id': 'd.id'},
+                                  join_type=join_type)
+                )
+                format = (
+                    'SELECT "djangomosqltest_employee".*, "d"."name" AS '
+                    '"department_name" FROM "djangomosqltest_employee" '
+                    '{t} JOIN "djangomosqltest_department" AS "d" ON '
+                    '"department_id" = "d"."id"'
+                )
+                if db == 'mysql':
+                    format = format.replace('"', '`')
+                eq_(people.query, format.format(t=join_type))
 
     def test_extra_select(self):
         people = Employee.objects.select().select(('first_name', 'fn'))
@@ -171,6 +208,19 @@ class EmployeeMoSQLMutableTests(TestCase):
             eq_(row_count, 1)       # One row affected
 
             eq_(people.count(), 0)
+
+    def test_delete_non_simple_limit(self):
+        for db in settings.DATABASES:
+            people = (
+                Employee.objects.db_manager(db).select().order_by('id')[:1]
+            )
+            person_id = people[0].id
+
+            row_count = people.delete()
+            eq_(row_count, 1)       # One row affected
+
+            with assert_raises(Employee.DoesNotExist):
+                Employee.objects.get(id=person_id)
 
 
 # Tests in this class originates from

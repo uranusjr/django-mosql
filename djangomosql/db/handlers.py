@@ -6,7 +6,7 @@ from django.db import connections
 from django.db.models.query import RawQuerySet
 from django.db.utils import DEFAULT_DB_ALIAS
 from mosql.util import raw, paren, identifier
-from .utils import patch_map, Patcher
+from .patch import patch_map, Patcher
 
 
 logger = logging.getLogger(__name__)
@@ -89,12 +89,12 @@ class EngineHandler(object):
         :returns: A sequence of fully qualified ``SELECT`` identifiers.
         """
         table = queryset._params['alias'] or queryset.model._meta.db_table
-        return (
+        return [
             raw('{func}({table}.{field}) AS {field}'.format(
                 func=aggregate, table=identifier(table),
                 field=identifier(field.get_attname_column()[1])))
             for field in queryset.model._meta.fields
-        )
+        ]
 
 
 class postgresql(EngineHandler):

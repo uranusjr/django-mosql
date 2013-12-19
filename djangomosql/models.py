@@ -12,10 +12,6 @@ from django.utils import six
 from mosql.query import select, join, delete
 from mosql.util import raw, identifier, paren
 from .db.handlers import get_engine_handler
-try:
-    basestring
-except NameError:   # If basestring is not a thing, just alias it to str
-    basestring = str
 
 
 class MoQuerySet(object):
@@ -269,7 +265,7 @@ class MoQuerySet(object):
             ``JOIN`` types. If ommited, a suitable type will be inferred
             automatically.
         """
-        if isinstance(model, basestring):   # Try to lazy-load the model
+        if isinstance(model, six.string_types):   # Try to lazy-load the model
             parts = model.split('.')
             if len(parts) == 2 and all(parts):
                 model = get_model(*parts) or model
@@ -278,7 +274,7 @@ class MoQuerySet(object):
 
         if inspect.isclass(model) and issubclass(model, Model):
             table = model._meta.db_table
-        elif isinstance(model, basestring):
+        elif isinstance(model, six.string_types):
             table = model
         else:
             raise TypeError('join() arg 1 must be a Django model or a str '

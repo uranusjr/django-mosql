@@ -3,19 +3,17 @@
 
 from django.conf import settings
 from django.db import connections
+from django.utils import six
 from django.test import TestCase
 from django_nose import FastFixtureTestCase
 from nose.tools import (
-    ok_, eq_, assert_not_equal, assert_false, assert_raises, assert_is_none
+    ok_, eq_, assert_not_equal, assert_true, assert_false, assert_raises,
+    assert_is_none
 )
 from djangomosql.functions import Min
 from djangomosql.utils import LazyString
 from djangomosql.db.handlers import get_engine_handler
 from .models import Employee, Department, FruitProduct
-try:
-    basestring
-except NameError:   # If basestring is not a thing, just alias it to str
-    basestring = str
 
 
 class BasicTests(TestCase):
@@ -67,11 +65,16 @@ class EmployeeMoSQLTests(FastFixtureTestCase):
         clone = people._clone()
         eq_(dir(clone), dir(people))
         eq_(clone._params.keys(), people._params.keys())
+
+        tested = False
         for k in people._params:
             eq_(people._params[k], clone._params[k])
-            if (not isinstance(people._params[k], (int, basestring))
+            if (not isinstance(people._params[k],
+                               (six.integer_types, six.string_types))
                     and people._params[k] is not None):
                 assert_false(people._params[k] is clone._params[k])
+                tested = True
+        assert_true(tested)
 
     def test_select(self):
         for db in settings.DATABASES:

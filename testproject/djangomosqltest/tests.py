@@ -119,6 +119,26 @@ class EmployeeMoSQLTests(FastFixtureTestCase):
         for p in people:
             ok_(p.fn)
 
+    def test_select_relation(self):
+        for db in settings.DATABASES:
+            dev_team = Department.objects.db_manager(db).get(name='Dev Team')
+
+            dev_guy = (
+                Employee.objects.db_manager(db)
+                        .select()
+                        .group_by('department_id')
+                        .where({'department_id': dev_team.id})
+            )[0]
+            eq_(dev_guy.department, dev_team)
+
+            neet = (
+                Employee.objects.db_manager(db)
+                        .select()
+                        .group_by('department_id')
+                        .where({'department_id': None})
+            )[0]
+            assert_is_none(neet.department)
+
 
 # These tests change states of the database, and therefore require database
 # refreshes between them.
@@ -151,26 +171,6 @@ class EmployeeMoSQLMutableTests(TestCase):
             eq_(row_count, 1)       # One row affected
 
             eq_(people.count(), 0)
-
-    def test_select_relation(self):
-        for db in settings.DATABASES:
-            dev_team = Department.objects.db_manager(db).get(name='Dev Team')
-
-            dev_guy = (
-                Employee.objects.db_manager(db)
-                        .select()
-                        .group_by('department_id')
-                        .where({'department_id': dev_team.id})
-            )[0]
-            eq_(dev_guy.department, dev_team)
-
-            neet = (
-                Employee.objects.db_manager(db)
-                        .select()
-                        .group_by('department_id')
-                        .where({'department_id': None})
-            )[0]
-            assert_is_none(neet.department)
 
 
 # Tests in this class originates from

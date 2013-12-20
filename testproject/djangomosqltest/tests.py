@@ -84,6 +84,13 @@ class EmployeeMoSQLTests(FastFixtureTestCase):
                 ok_(p.first_name)
                 ok_(p.last_name)
 
+    def test_non_ascii(self):
+        for db in settings.DATABASES:
+            people = Employee.objects.db_manager(db).select().where({
+                'last_name': u'楊'
+            })
+            eq_(people.count(), 1)
+
     def test_where(self):
         for db in settings.DATABASES:
             people = Employee.objects.db_manager(db).select().where({
@@ -94,7 +101,7 @@ class EmployeeMoSQLTests(FastFixtureTestCase):
             eq_(people[0].last_name, 'Liu')
             eq_(people[0].department, None)
 
-            people = people.where({'last_name': 'Lin'})
+            people = people.where({'last_name': u'楊'})
             eq_(people.count(), 0)
 
     def test_join(self):

@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-__all__ = ['MoQuerySet', 'MoManager']
-
+from __future__ import unicode_literals
 import copy
 import inspect
 from django.db import transaction
@@ -12,6 +11,8 @@ from django.utils import six
 from mosql.query import select, join, delete
 from mosql.util import raw, identifier, paren
 from .db.handlers import get_engine_handler
+
+__all__ = ['MoQuerySet', 'MoManager']
 
 
 class MoQuerySet(object):

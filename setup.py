@@ -14,7 +14,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 setup(
     name='django-mosql',
     version=VERSION,
-    packages=['djangomosql'],
+    packages=['djangomosql', 'djangomosql.db'],
     include_package_data=True,
     install_requires=['django>=1.4.2', 'mosql>=0.8.1'],
     license='BSD License',

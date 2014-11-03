@@ -5,7 +5,6 @@ from django.conf import settings
 from django.db import connections
 from django.utils import six
 from django.test import TestCase
-from django_nose import FastFixtureTestCase
 from nose.tools import (
     ok_, eq_, assert_not_equal, assert_true, assert_false, assert_raises,
     assert_is_none
@@ -51,7 +50,7 @@ class ReprTests(TestCase):
             ))
 
 
-class EmployeeMoSQLTests(FastFixtureTestCase):
+class EmployeeMoSQLTests(TestCase):
 
     fixtures = ['employees']
     multi_db = True
@@ -172,17 +171,17 @@ class EmployeeMoSQLTests(FastFixtureTestCase):
 
             dev_guy = (
                 Employee.objects.db_manager(db)
-                        .select()
-                        .group_by('department_id')
-                        .where({'department_id': dev_team.id})
+                        .select().as_('e')
+                        .group_by('e.department_id')
+                        .where({'e.department_id': dev_team.id})
             )[0]
             eq_(dev_guy.department, dev_team)
 
             neet = (
                 Employee.objects.db_manager(db)
-                        .select()
-                        .group_by('department_id')
-                        .where({'department_id': None})
+                        .select().as_('e')
+                        .group_by('e.department_id')
+                        .where({'e.department_id': None})
             )[0]
             assert_is_none(neet.department)
 
@@ -230,12 +229,12 @@ class EmployeeMoSQLMutableTests(TestCase):
             eq_(row_count, 1)       # One row affected
 
             with assert_raises(Employee.DoesNotExist):
-                Employee.objects.get(id=person_id)
+                Employee.objects.db_manager(db).get(id=person_id)
 
 
 # Tests in this class originates from
 # http://www.xaprb.com/blog/2006/12/07/how-to-select-the-firstleastmax-row-per-group-in-sql/
-class FruitMoSQLTests(FastFixtureTestCase):
+class FruitMoSQLTests(TestCase):
 
     fixtures = ['fruits']
     multi_db = True
@@ -294,8 +293,9 @@ class FruitMoSQLTests(FastFixtureTestCase):
             products = (
                 FruitProduct.objects.db_manager(db)
                             .select((Min('price'), 'minprice'))
-                            .group_by('kind')
-                            .order_by('kind')
+                            .as_('f')
+                            .group_by('f.kind')
+                            .order_by('f.kind')
             )
             eq_((products[0].kind, products[0].minprice), ('apple', 0.24))
             eq_((products[1].kind, products[1].minprice), ('cherry', 2.55))
@@ -313,7 +313,9 @@ class FruitMoSQLTests(FastFixtureTestCase):
     def test_subquery(self):
         for db in settings.DATABASES:
             m = FruitProduct.objects.db_manager(db)
-            inner = m.select((Min('price'), 'minprice')).group_by('kind')
+            inner = m.select(
+                (Min('price'), 'minprice')
+            ).as_('fi').group_by('fi.kind')
             p = m.select().as_('f').order_by('f.kind').join(
                 inner, 'x', on={'f.kind': 'x.kind', 'f.price': 'x.minprice'}
             )

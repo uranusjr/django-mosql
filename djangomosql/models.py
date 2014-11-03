@@ -163,7 +163,6 @@ class MoQuerySet(object):
         # Execute the query
         cursor = handler.cursor()
         cursor.execute(query)
-        transaction.commit_unless_managed()
         return cursor.rowcount
 
     def resolve(self):

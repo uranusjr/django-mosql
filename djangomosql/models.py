@@ -4,7 +4,7 @@
 from __future__ import unicode_literals
 import copy
 import inspect
-from django.db import transaction
+from django.db import router
 from django.db.models import Model, Manager, get_model
 from django.db.models.query import RawQuerySet
 from django.utils import six
@@ -77,6 +77,12 @@ class MoQuerySet(object):
         else:
             return list(self)[k]
 
+    @property
+    def db(self):
+        if self._for_write:
+            return self._db or router.db_for_write(self.model, **self._hints)
+        return self._db or router.db_for_read(self.model, **self._hints)
+
     def _clone(self):
         clone = MoQuerySet(
             model=self.model,
@@ -89,7 +95,7 @@ class MoQuerySet(object):
 
     def _get_select_query(self, fields=None):
         """The raw SQL that will be used to resolve the queryset."""
-        handler = get_engine_handler(self._db)
+        handler = get_engine_handler(self.db)
 
         with handler.patch():
             params = copy.deepcopy(self._params)
@@ -145,7 +151,7 @@ class MoQuerySet(object):
         # Try to keep things simple by resolving a direct DELETE ... WHERE ...
         # query. If that proves impossible, fallback to the naive DELETE ...
         # WHERE <pk> IN (SELECT ...) solution.
-        handler = get_engine_handler(self._db)
+        handler = get_engine_handler(self.db)
         table = self.model._meta.db_table
 
         params = copy.deepcopy(self._params)

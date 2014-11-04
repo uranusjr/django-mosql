@@ -116,7 +116,7 @@ class MoQuerySet(object):
             #   use a "*" to indicate all fields;
             # If the query has aggregation (GROUP BY), however, we will need to
             #   choose a value to display for each field (especially pk because
-            #   it is needed by Django). Since ccessing those fields doesn't
+            #   it is needed by Django). Since accessing those fields doesn't
             #   really make sense anyway, We arbitrarily use MIN.
             table_name = alias or table
 

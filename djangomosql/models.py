@@ -34,6 +34,7 @@ class MoQuerySet(object):
         self.extra_fields = extra_fields
         self._db = using
         self._rawqueryset = None
+        self._for_write = False
         self._params = {
             'offset': 0,
             'limit': None,
@@ -80,8 +81,8 @@ class MoQuerySet(object):
     @property
     def db(self):
         if self._for_write:
-            return self._db or router.db_for_write(self.model, **self._hints)
-        return self._db or router.db_for_read(self.model, **self._hints)
+            return self._db or router.db_for_write(self.model)
+        return self._db or router.db_for_read(self.model)
 
     def _clone(self):
         clone = MoQuerySet(
@@ -151,6 +152,7 @@ class MoQuerySet(object):
         # Try to keep things simple by resolving a direct DELETE ... WHERE ...
         # query. If that proves impossible, fallback to the naive DELETE ...
         # WHERE <pk> IN (SELECT ...) solution.
+        self._for_write = True
         handler = get_engine_handler(self.db)
         table = self.model._meta.db_table
 

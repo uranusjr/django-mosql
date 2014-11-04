@@ -11,8 +11,8 @@ env:
 
 install:
     - pip install -q django==$DJANGO --use-mirrors
-    - pip install -q django-nose>=1.2 --use-mirrors
     - pip install -q -e . --use-mirrors
+    - pip install -q -r requirements-dev.txt
 
 script:
     - python testproject/manage.py test

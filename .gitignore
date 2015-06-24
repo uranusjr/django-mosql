@@ -3,5 +3,6 @@ __pycache__/
 /django_mosql.egg-info/
 /build/
 /dist/
+/.tox/
 db.sqlite3
 /.coverage

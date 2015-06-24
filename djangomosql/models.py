@@ -4,12 +4,16 @@
 from __future__ import unicode_literals
 import copy
 import inspect
+
 from django.db import router
-from django.db.models import Model, Manager, get_model
+from django.db.models import Model, Manager
 from django.db.models.query import RawQuerySet
 from django.utils import six
+
 from mosql.query import select, join, delete
 from mosql.util import raw, identifier, paren
+
+from .compat import get_model
 from .db.handlers import get_engine_handler
 
 __all__ = ['MoQuerySet', 'MoManager']

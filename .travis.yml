@@ -16,5 +16,5 @@ install:
     - pip install -q -r requirements-dev.txt
 
 script:
-    - cd testprojet && python manage.py test
+    - cd testproject && python manage.py test
 

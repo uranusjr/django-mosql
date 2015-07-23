@@ -19,13 +19,16 @@ class LazyString(object):
         return self._func()
 
     def __iter__(self):
-        return iter(six.text_type(self))
+        return iter(self.__class__(self))
 
     def __len__(self):
-        return len(six.text_type(self))
+        return len(self.__class__(self))
 
     def __getitem__(self, k):
-        return six.text_type(self)[k]
+        return self.__class__(self)[k]
 
     def __getattr__(self, key):
-        return getattr(six.text_type(self), key)
+        return getattr(self.__class__(self), key)
+
+    def __add__(self, other):
+        return self.__class__(self) + other

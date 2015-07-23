@@ -17,4 +17,3 @@ install:
 
 script:
     - cd testproject && python manage.py test
-

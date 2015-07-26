@@ -74,8 +74,8 @@ else:
     DATABASES['mysql'] = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'djangomosqltestproject',
-        'USER': 'djangomosql',
-        'PASSWORD': 'djangomosql'
+        'USER': '',
+        'PASSWORD': ''
     }
 
 try:
@@ -87,8 +87,8 @@ else:
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'HOST': 'localhost',
         'NAME': 'djangomosqltestproject',
-        'USER': 'djangomosql',
-        'PASSWORD': 'djangomosql'
+        'USER': '',
+        'PASSWORD': ''
     }
 
 # Internationalization
